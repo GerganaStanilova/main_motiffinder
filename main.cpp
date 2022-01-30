@@ -105,7 +105,7 @@ mutex mtx_done_buckets, mtx_bucket_conseqs;
 map<int, vector<pair<int,DnaString>>> foundMatches;
 StringSet<DnaString> sequences;
 
-bool printProgress = false;
+bool print_progress = false;
 
 
 
@@ -440,7 +440,7 @@ vector<int> secondsToHours(int seconds) {
  * Print the progress of the process.
  */
 void printProgress() {
-    while(printProgress) {
+    while(print_progress) {
         this_thread::sleep_for(chrono::milliseconds(200)); // refresh rate: around 5 times per second
         double trial_progress = 100 * (double) done_buckets / (double) buckets_quantity;
         double dataset_progress = (100 * (double) (done_trials % m) / (double) m) + (trial_progress / m);
@@ -505,7 +505,7 @@ DnaString projection(){
         randomProjections(l, k, buckets);
         buckets_quantity = length(buckets);
         done_buckets = 0;
-        printProgress = true;
+        print_progress = true;
         thread printer(printProgress);
         for(int th = 0; th < noOfThreads; th++) { // parallelism
             int iters = length(buckets); int span = iters / noOfThreads; int remainers = iters - (span * noOfThreads);
@@ -524,7 +524,7 @@ DnaString projection(){
         for(int th = 0; th < noOfThreads; th++) {
             threads[th].join();
         }
-        printProgress=false;
+        print_progress = false;
         printer.join();
         trial_conseqs.push_back(bestConsensusOf(bucket_conseqs)); // best_conseq_of_kmer (or an euqally good one) is found and saved
         threads.clear();
