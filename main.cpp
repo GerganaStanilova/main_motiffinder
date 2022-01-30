@@ -172,7 +172,7 @@ vector<vector<string>> csvParseIntoVector(istream& stream, char delim = '\t', in
  * if not, the first consensus sequence with the lowest score available score
  * is returned.
  */
-pair<DnaString, int> best_consensus_of(vector<pair<DnaString, int>>& conseqs) {
+pair<DnaString, int> bestConsensusOf(vector<pair<DnaString, int>>& conseqs) {
     pair<DnaString, int> best_conseq;
     int cur_min_score = -1;
     for(auto conseq : conseqs) {
@@ -191,7 +191,7 @@ pair<DnaString, int> best_consensus_of(vector<pair<DnaString, int>>& conseqs) {
 /**
  * datasets a double x to n decimals.
  */
-double rwp(double num, int precision) { //round with precision = rwp
+double roundWithPrecision(double num, int precision) {
     double factor = pow(10.0, (double) precision+1);
     return (int)(((num * factor) + 5) / 10) / (factor / 10);
 }
@@ -239,7 +239,7 @@ DnaString substr(DnaString& seq, int start, int length) {
 /**
  * Return a bitmap with k ones and l-k zeros. The ones and zeros are uniformly distributed.
  */
-String<char> get_random_bitmap(int motif_length, int projection_length) {
+String<char> getRandomBitmap(int motif_length, int projection_length) {
     String<char> bitmap; random_device rd; mt19937 mt(rd());
     uniform_real_distribution<double> distribution(0.0, 1.0);
     for (int i = 0, j = projection_length, k = projection_length - motif_length; i < motif_length; i++)
@@ -253,8 +253,8 @@ String<char> get_random_bitmap(int motif_length, int projection_length) {
  * Randomly choose k position for every possible motif in all sequences.
  * Create a hash h from the k positions, then save the current position in a bucket at index h.
  */
-void random_projections(int& motif_length, int& projection_length,map<int, vector<pair<int,int>>>& buckets) {
-    String<char> bitmap = get_random_bitmap(motif_length, projection_length);
+void randomProjections(int& motif_length, int& projection_length,map<int, vector<pair<int,int>>>& buckets) {
+    String<char> bitmap = getRandomBitmap(motif_length, projection_length);
     for (TStringSetIterator it = begin(sequences); it != end(sequences); ++it){
         Index<DnaString, IndexQGram<GenericShape> > index(*it); //use the bitmap on a generic shape
         stringToShape(indexShape(index), bitmap);
@@ -346,7 +346,7 @@ void refine(int& motif_length, vector<vector<float>>& Wh, vector<vector<float>>&
  * take an l-mer from each sequence using the posM
  * (fill T with this bucket's lmers)
  */
-void get_consensus_seq(int& motif_length, int& d, vector<vector<float>>& posM, vector<pair<DnaString, int>>& bucket_conseqs) {
+void getConsensusSeq(int& motif_length, int& d, vector<vector<float>>& posM, vector<pair<DnaString, int>>& bucket_conseqs) {
 
     StringSet<DnaString> T;
     DnaString conseq_of_t; //consensus sequence
@@ -439,20 +439,20 @@ vector<int> secondsToHours(int seconds) {
 /**
  * Print the progress of the process.
  */
-void print_progress() {
+void printProgress() {
     while(printProgress) {
         this_thread::sleep_for(chrono::milliseconds(200)); // refresh rate: around 5 times per second
         double trial_progress = 100 * (double) done_buckets / (double) buckets_quantity;
         double dataset_progress = (100 * (double) (done_trials % m) / (double) m) + (trial_progress / m);
         double overall_progress = (100 * (double) done_datasets / (double) datasets) + (dataset_progress / datasets);
-        int curdec = (int) rwp(trial_progress, 0);
+        int curdec = (int) roundWithPrecision(trial_progress, 0);
         int diff = chrono::duration_cast<chrono::seconds>(chrono::steady_clock::now() - datasets_start).count(); //now-program_start
         int total_seconds = (100.0 / overall_progress) * diff;
         time_left = secondsToHours(total_seconds - diff);
 
-        cout << "\rOAP: " << rwp(overall_progress, 0) << "%    "; // Overall Progress
+        cout << "\rOAP: " << roundWithPrecision(overall_progress, 0) << "%    "; // Overall Progress
         cout << "ETA(hh:mm:ss): " << timeVectorToString(time_left) << "    "; // Estimated time left
-        cout << "Dataset [" << tmp_round <<"/"<<datasets << "]: " << rwp(dataset_progress, 0) << "%    "; // Dataset progress
+        cout << "Dataset [" << tmp_round <<"/"<<datasets << "]: " << roundWithPrecision(dataset_progress, 0) << "%    "; // Dataset progress
         cout << "Trial [" << tmp_trial << "/" << m << "]: " << curdec << "% ["; // Trial progress
         for(int i = 0; i < curdec / 5; i++) cout << "#"; // Trial progress bar, reached positions filled with #
         for(int i = curdec / 5; i < 20; i++) cout << " "; // Trial progress bar, left positions filled with spaces
@@ -478,7 +478,7 @@ bool mf(int motif_length, int threshold, int trial, int bstart, int bend, map<in
                 initWh(motif_length, bucket, Wh); //initialize weight matrix Wh for prob of a base in the motif
                 for(int refine_iter = 0; refine_iter < 5; refine_iter++) //Refine weight matrix W and posM until convergence
                     refine(motif_length, Wh, posM);
-                get_consensus_seq(motif_length, d, posM, bucket_conseqs); //CONSENSUS SEQUENCE
+                getConsensusSeq(motif_length, d, posM, bucket_conseqs); //CONSENSUS SEQUENCE
             }
             mtx_done_buckets.lock(); done_buckets++; mtx_done_buckets.unlock();
         }
@@ -502,11 +502,11 @@ DnaString projection(){
         tmp_trial = trial;
         map<int, vector<pair<int, int>>> buckets;
         vector<pair<DnaString, int>> bucket_conseqs;
-        random_projections(l, k, buckets);
+        randomProjections(l, k, buckets);
         buckets_quantity = length(buckets);
         done_buckets = 0;
         printProgress = true;
-        thread printer(print_progress);
+        thread printer(printProgress);
         for(int th = 0; th < noOfThreads; th++) { // parallelism
             int iters = length(buckets); int span = iters / noOfThreads; int remainers = iters - (span * noOfThreads);
             int bstart = th * span; int bend = bstart + span - 1;
@@ -526,12 +526,12 @@ DnaString projection(){
         }
         printProgress=false;
         printer.join();
-        trial_conseqs.push_back(best_consensus_of(bucket_conseqs)); // best_conseq_of_kmer (or an euqally good one) is found and saved
+        trial_conseqs.push_back(bestConsensusOf(bucket_conseqs)); // best_conseq_of_kmer (or an euqally good one) is found and saved
         threads.clear();
         done_trials++;
     }
     cout << endl;
-    pair<DnaString, int> consensus_sequencs = best_consensus_of(trial_conseqs); //consensus sequence of best bucket (smallest score(T))
+    pair<DnaString, int> consensus_sequencs = bestConsensusOf(trial_conseqs); //consensus sequence of best bucket (smallest score(T))
     cout << "searched consensus sequence: [" << consensus_sequencs.first << "] with a score of " << consensus_sequencs.second << endl;
     return consensus_sequencs.first;
 }
@@ -620,7 +620,7 @@ void printPerformanceCoefficient(DnaString pattern) {
         }
     }
     avrg_performance_coefficient += (double)z / (double)n;
-    cout << "The performance coefficient is " << rwp((double)z / (double)n, 2) << "." << endl;
+    cout << "The performance coefficient is " << roundWithPrecision((double)z / (double)n, 2) << "." << endl;
 }
 
 
@@ -733,7 +733,7 @@ int main(int argc, char const ** argv) {
     average_time = average_time / length(times);
     cout << "The average time for one trial was " << average_time / 1000 << " seconds." << endl;
 
-    cout << "For " << exactMatches << " out of " << datasets << " dataset(s) the correct planted motifs were found. The average performance coefficient is " << rwp(avrg_performance_coefficient / (double) datasets, 2) << endl;
+    cout << "For " << exactMatches << " out of " << datasets << " dataset(s) the correct planted motifs were found. The average performance coefficient is " << roundWithPrecision(avrg_performance_coefficient / (double) datasets, 2) << endl;
 
     chrono::steady_clock::time_point program_end = chrono::steady_clock::now();
     vector<int> time_passed = secondsToHours(chrono::duration_cast<chrono::seconds>(program_end-program_start).count());
