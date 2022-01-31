@@ -1,14 +1,22 @@
 #include <seqan/index.h>
 #include <seqan/seq_io.h>
 #include <experimental/filesystem>
+#include <vector>
+#include <fstream>
+#include <iostream>
+#include <iterator>
 //#include "omp.h"
 
 using namespace std;
 using namespace seqan;
 
+/*
+ * Genmap function to load raw files
+ * https://github.com/cpockrandt/genmap/wiki/#how-to-load-raw-files-map-freq8-freq16-in-c
+ */
 
 template <typename value_t>
-void load(vector<value_t>& vec, string path)
+void load(vector<value_t> & vec, string path)
 {
     ifstream file(path, ios::binary);
     if (!file.eof() && !file.fail())
@@ -24,7 +32,8 @@ void load(vector<value_t>& vec, string path)
     // something went wrong ...
 }
 
-vector<uint8_t> getGenmapFrequency(string path_filename, string filename, int motif_length, int mismatches) {
+
+vector<uint8_t> getGenmapFrequencyVector(string path_filename, string filename, int motif_length, int mismatches) {
     vector<uint8_t> frequency_vector;
     string output_folder_name = "_output_";
     string genmap_command =
@@ -694,8 +703,10 @@ int main(int argc, char const ** argv) {
             if(file.good()) pm = csvParseIntoVector(file, '\t', 1);
             else { cerr << "Planted motif file not found or not readable \n"; return -1; }
         }
-
-        vector<uint8_t> genmap_frequency = getGenmapFrequency(
+        /*
+         * Compute the mappbility/get genmap frequency vector
+         */
+        vector<uint8_t> genmap_frequency_vector = getGenmapFrequencyVector(
                 datasetName + no,
                 file_without_suffix + no,
                 l,
@@ -713,7 +724,7 @@ int main(int argc, char const ** argv) {
         bool proj = false;
 
         chrono::steady_clock::time_point start = chrono::steady_clock::now();
-        DnaString pattern = proj ? projection() : run(l, genmap_frequency, length(sequences), length(sequences[0]));
+        DnaString pattern = proj ? projection() : run(l, genmap_frequency_vector, length(sequences), length(sequences[0]));
         if(length(pattern) == 0) return -4; // No sequences in any bucket
         chrono::steady_clock::time_point end = chrono::steady_clock::now();
         times.push_back(chrono::duration_cast<chrono::milliseconds>(end - start).count() / m);
