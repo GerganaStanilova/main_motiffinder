@@ -505,7 +505,7 @@ bool mf(int motif_length, int threshold, int trial, int bstart, int bend, map<in
  * the best consensus sequence to a vector. In the end it takes
  * the best of that vector.
  */
-DnaString projection(){
+DnaString runProjection(){
     vector<pair<DnaString, int>> trial_conseqs;
     for(int trial = 1; trial <= m; trial++) { // m = number of trials
         tmp_trial = trial;
@@ -546,7 +546,7 @@ DnaString projection(){
 }
 
 
-DnaString run(int motif_length, vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length) { //added &
+DnaString runGenmap(int motif_length, vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length) { //added &
     cout << "running _not_ projection..." << endl;
     DnaString consensus_sequence;
     vector<pair<int, int>> processed_frequency_vector;
@@ -724,7 +724,7 @@ int main(int argc, char const ** argv) {
         bool proj = false;
 
         chrono::steady_clock::time_point start = chrono::steady_clock::now();
-        DnaString pattern = proj ? projection() : run(l, genmap_frequency_vector, length(sequences), length(sequences[0]));
+        DnaString pattern = proj ? runProjection() : runGenmap(l, genmap_frequency_vector, length(sequences), length(sequences[0]));
         if(length(pattern) == 0) return -4; // No sequences in any bucket
         chrono::steady_clock::time_point end = chrono::steady_clock::now();
         times.push_back(chrono::duration_cast<chrono::milliseconds>(end - start).count() / m);
