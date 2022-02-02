@@ -11,7 +11,7 @@ using namespace std;
 using namespace seqan;
 
 /*
- * Genmap function to load raw files
+ * GenMap function to load raw files
  * https://github.com/cpockrandt/genmap/wiki/#how-to-load-raw-files-map-freq8-freq16-in-c
  */
 
@@ -33,7 +33,7 @@ void load(vector<value_t> & vec, string path)
 }
 
 
-vector<uint8_t> getGenmapFrequencyVector(string path_filename, string filename, int motif_length, int mismatches) {
+vector<uint8_t> getGenMapFrequencyVector(string path_filename, string filename, int motif_length, int mismatches) {
     vector<uint8_t> frequency_vector;
     string output_folder_name = "_output_";
     string genmap_command =
@@ -60,7 +60,7 @@ vector<uint8_t> getGenmapFrequencyVector(string path_filename, string filename, 
     return frequency_vector;
 }
 
-vector<pair<int, int>> processGenmapFrequencyVector(vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length) { //added &
+vector<pair<int, int>> processGenMapFrequencyVector(vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length) { //added &
     vector<pair<int, int>> genmap_frequency_matrix;
     vector<int> maxValues;
     vector<float> current_frequency_row;
@@ -401,7 +401,7 @@ void getConsensusSeq(int& motif_length, int& d, vector<vector<float>>& posM, vec
 }
 
 
-DnaString getConsesusByGenmapFrequency(
+DnaString getConsesusByGenMapFrequency(
         int& motif_length,
         vector<pair<int, int>>& starting_positions
 ) {
@@ -546,17 +546,17 @@ DnaString runProjection(){
 }
 
 
-DnaString runGenmap(int motif_length, vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length) { //added &
+DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length) { //added &
     cout << "running _not_ projection..." << endl;
     DnaString consensus_sequence;
     vector<pair<int, int>> processed_frequency_vector;
 
 
     cout << "processing vector..." << endl;
-    processed_frequency_vector = processGenmapFrequencyVector(frequency_vector, no_of_sequences, sequence_length);
+    processed_frequency_vector = processGenMapFrequencyVector(frequency_vector, no_of_sequences, sequence_length);
 
     cout << "getting consensus sequence..." << endl;
-    consensus_sequence = getConsesusByGenmapFrequency(motif_length, processed_frequency_vector);
+    consensus_sequence = getConsesusByGenMapFrequency(motif_length, processed_frequency_vector);
 
     cout << "consensus sequence: " << consensus_sequence << endl;
 
@@ -706,7 +706,7 @@ int main(int argc, char const ** argv) {
         /*
          * Compute the mappbility/get genmap frequency vector
          */
-        vector<uint8_t> genmap_frequency_vector = getGenmapFrequencyVector(
+        vector<uint8_t> genmap_frequency_vector = getGenMapFrequencyVector(
                 datasetName + no,
                 file_without_suffix + no,
                 l,
@@ -724,7 +724,7 @@ int main(int argc, char const ** argv) {
         bool proj = false;
 
         chrono::steady_clock::time_point start = chrono::steady_clock::now();
-        DnaString pattern = proj ? runProjection() : runGenmap(l, genmap_frequency_vector, length(sequences), length(sequences[0]));
+        DnaString pattern = proj ? runProjection() : runGenMap(l, genmap_frequency_vector, length(sequences), length(sequences[0]));
         if(length(pattern) == 0) return -4; // No sequences in any bucket
         chrono::steady_clock::time_point end = chrono::steady_clock::now();
         times.push_back(chrono::duration_cast<chrono::milliseconds>(end - start).count() / m);
