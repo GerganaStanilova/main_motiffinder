@@ -5,6 +5,8 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <map>
+#include <math.h>
 //#include "omp.h"
 
 using namespace std;
@@ -60,11 +62,76 @@ vector<uint8_t> getGenMapFrequencyVector(string path_filename, string filename, 
     return frequency_vector;
 }
 
-vector<pair<int, int>> processGenMapFrequencyVector(vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length) { //added &
+/*
+ * Remove duplicates
+ * https://www.techiedelight.com/remove-duplicates-vector-cpp/
+ */
+
+vector<uint8_t> removeDuplicates(vector<uint8_t> v) {
+    sort(v.begin(), v.end());
+    v.erase(unique(v.begin(), v.end()), v.end());
+    return v;
+}
+/*
+ *
+ * https://cppsecrets.com/users/41129711010797106994610011511264103109971051084699111109/Find-the-Nth-largest-element-in-a-vector.php
+ */
+
+int findNthLargestNumber(vector<uint8_t>& v, int nthLargestNumber) {
+    // only two lines of code required.
+    v = removeDuplicates(v);
+    sort(v.begin(), v.end());
+    return v[v.size() - nthLargestNumber];
+}
+
+vector<pair<int, int>> processGenMapFrequencyVector(vector<uint8_t> frequency_vector, int no_of_sequences, int sequence_length) { //added &
     vector<pair<int, int>> genmap_frequency_matrix;
-    vector<int> maxValues;
+    vector<uint8_t> nth_largest_vector;
     vector<float> current_frequency_row;
 
+    map<int, vector<int>> test_map;
+
+    int nth_largest = 2;
+
+    //std::copy(frequency_vector.begin(), frequency_vector.end(), std::ostream_iterator<int>(std::cout, " "));
+    //std::cout << '\n';
+
+    // ToDo only iterate until length(frequency_vector - motif_length + 1)
+    for(int i = 0, nth_largest_num = 0, pos = 0; i < length(frequency_vector); i++) {
+
+
+
+
+
+
+        //Create a vector with the nth highest frequency for each sequence
+        if(i % sequence_length == 0){
+            vector<uint8_t> newVec(frequency_vector.begin() + i, frequency_vector.begin() + i + sequence_length);
+            nth_largest_num = findNthLargestNumber(newVec, nth_largest);
+            nth_largest_vector.push_back(nth_largest_num);
+            cout << "nth largest num " << nth_largest_num << endl;
+        }
+        if(frequency_vector.at(i) >= nth_largest_vector[ceil((i + 1) / sequence_length)]) {
+            cout << "frequency vector value " << to_string(frequency_vector[i]) << endl;
+            pos = ((i + 1) % sequence_length) - 1;
+            cout << "pos " << pos << endl;
+        }
+
+
+        if((i + 1) % sequence_length == 0) { //if it's the end of a sequence
+            int current_sequence_number = i / sequence_length;
+            genmap_frequency_matrix.push_back(pair<int, int>(current_sequence_number, pos));
+            cout << "line " << current_sequence_number << " pos " << pos << ": " << frequency_vector[i] << endl;
+        }
+    }
+
+
+    /*for(pair<int, int> pos : starting_positions) {
+        DnaString current_lmer;
+        current_lmer = substr(sequences[pos.first], pos.second, motif_length);
+        cout << pos.first << " : " << current_lmer << endl;
+    }*/
+    /*
     // ToDo only iterate until length(frequency_vector - motif_length + 1)
     for(int i = 0, max = 0, pos = 0; i < length(frequency_vector); i++) {
         if(max < frequency_vector[i]) {
@@ -72,13 +139,25 @@ vector<pair<int, int>> processGenMapFrequencyVector(vector<uint8_t>& frequency_v
             pos = ((i + 1) % sequence_length) - 1;
         }
         if((i + 1) % sequence_length == 0) {
-            maxValues.push_back(max);
+			maxValues.push_back(max);
             int current_sequence_number = i / sequence_length;
-            genmap_frequency_matrix.push_back(pair<int, int>(current_sequence_number, pos));
-            cout << "line " << current_sequence_number << " pos " << pos << ": " << max << endl;
-            max = 0;
+			genmap_frequency_matrix.push_back(pair<int, int>(current_sequence_number, pos));
+			cout << "line " << current_sequence_number << " pos " << pos << ": " << max << endl;
+			max = 0;
         }
-    }
+    }*/
+
+    /*map<int, vector<int>> my_map;
+
+    int nth_largest = 3;
+    int nth_largest_num = findNthLargestNumber(nums, nth_largest);
+    for(auto num : nums) {
+        if(num >= nth_largest_num){
+            cout << num << endl;
+        }
+    }*/
+
+
     //
     // for(int i = 0, j = 0, pos = 0; i < length(frequency_vector); i++) {
     // 	if( maxValues[j] = frequency_vector[i]) {
@@ -111,7 +190,7 @@ vector<thread> threads;
 vector<vector<string>> parameters, pm;
 mutex mtx_done_buckets, mtx_bucket_conseqs;
 
-map<int, vector<pair<int,DnaString>>> foundMatches;
+map<int, vector<pair<int, DnaString>>> foundMatches;
 StringSet<DnaString> sequences;
 
 bool print_progress = false;
