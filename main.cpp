@@ -7,6 +7,7 @@
 #include <iterator>
 #include <map>
 #include <math.h>
+#include <typeinfo>
 //#include "omp.h"
 
 using namespace std;
@@ -67,7 +68,7 @@ vector<uint8_t> getGenMapFrequencyVector(string path_filename, string filename, 
  * https://www.techiedelight.com/remove-duplicates-vector-cpp/
  */
 
-vector<uint8_t> removeDuplicates(vector<uint8_t> v) {
+vector<int> removeDuplicates(vector<int> v) {
     sort(v.begin(), v.end());
     v.erase(unique(v.begin(), v.end()), v.end());
     return v;
@@ -77,52 +78,73 @@ vector<uint8_t> removeDuplicates(vector<uint8_t> v) {
  * https://cppsecrets.com/users/41129711010797106994610011511264103109971051084699111109/Find-the-Nth-largest-element-in-a-vector.php
  */
 
-int findNthLargestNumber(vector<uint8_t>& v, int nthLargestNumber) {
+int findNthLargestNumber(vector<int>& v, int nthLargestNumber) {
     // only two lines of code required.
     v = removeDuplicates(v);
     sort(v.begin(), v.end());
     return v[v.size() - nthLargestNumber];
 }
 
+/**
+ * The maps in this program have a vector at each key. Adding a new element to key x means
+ * "add element to the vector at key x" or, if key x has not been initialized yet, "add a
+ * vector to key x, then add the element to that vector". This helper function allows us
+ * to define the type of the element to be added.
+ */
+template<typename T> void addToMap(map<int, vector<T>>& map, int key, T item) {
+    if(map.count(key) > 0) //if it already exist
+        map[key].push_back(item);
+    else
+        map.insert(pair<int, vector<T>>(key,vector<T> (1, item)));
+}
+
 vector<pair<int, int>> processGenMapFrequencyVector(vector<uint8_t> frequency_vector, int no_of_sequences, int sequence_length) { //added &
-    vector<pair<int, int>> genmap_frequency_matrix;
-    vector<uint8_t> nth_largest_vector;
-    vector<float> current_frequency_row;
+    vector<pair<int, int>> genmap_candidates;
+    map<int, vector<int>> genmap_candidate_seq_pos;
 
-    map<int, vector<int>> test_map;
 
+    //vector<float> current_frequency_row;
+
+
+    //vector<int> nth_largest_vector;
     int nth_largest = 2;
 
     //std::copy(frequency_vector.begin(), frequency_vector.end(), std::ostream_iterator<int>(std::cout, " "));
     //std::cout << '\n';
 
+    vector<int> frequency_vector_int;
+    for (int i = 0; i < length(frequency_vector); i++ ) {
+        frequency_vector_int.push_back((int) frequency_vector[i]);
+    }
+
     // ToDo only iterate until length(frequency_vector - motif_length + 1)
-    for(int i = 0, nth_largest_num = 0, pos = 0; i < length(frequency_vector); i++) {
+    for(int i = 0, nth_largest_num = 0, pos = 0; i < frequency_vector_int.size(); i++) {
 
-
-
-
-
-
-        //Create a vector with the nth highest frequency for each sequence
+        //Calculate the nth highest frequency for each sequence
         if(i % sequence_length == 0){
-            vector<uint8_t> newVec(frequency_vector.begin() + i, frequency_vector.begin() + i + sequence_length);
-            nth_largest_num = findNthLargestNumber(newVec, nth_largest);
-            nth_largest_vector.push_back(nth_largest_num);
+            vector<int> sub_vec(frequency_vector_int.begin() + i, frequency_vector_int.begin() + i + sequence_length);
+            nth_largest_num = findNthLargestNumber(sub_vec, nth_largest);
+            //nth_largest_vector.push_back(nth_largest_num);
             cout << "nth largest num " << nth_largest_num << endl;
         }
-        if(frequency_vector.at(i) >= nth_largest_vector[ceil((i + 1) / sequence_length)]) {
-            cout << "frequency vector value " << to_string(frequency_vector[i]) << endl;
-            pos = ((i + 1) % sequence_length) - 1;
-            cout << "pos " << pos << endl;
-        }
 
 
+        int current_sequence_number;
         if((i + 1) % sequence_length == 0) { //if it's the end of a sequence
-            int current_sequence_number = i / sequence_length;
-            genmap_frequency_matrix.push_back(pair<int, int>(current_sequence_number, pos));
-            cout << "line " << current_sequence_number << " pos " << pos << ": " << frequency_vector[i] << endl;
+            current_sequence_number = i / sequence_length;
+            cout << "--------------------------------------------------------- current seq num " << current_sequence_number << endl;
+            genmap_candidates.push_back(pair<int, int>(current_sequence_number, pos));
+
+            //cout << "line " << current_sequence_number << " pos " << genmap_frequency_matrix[i].second << ": " << frequency_vector_int[i] << endl;
         }
+
+        if(frequency_vector[i] >= nth_largest_num) {
+            cout << "frequency vector value " << frequency_vector_int[i];
+            pos = ((i + 1) % sequence_length) - 1;
+            cout << " pos " << pos << endl;
+            addToMap<pair<int, int>>(genmap_candidate_seq_pos, current_sequence_number, pos);
+        }
+
     }
 
 
@@ -170,7 +192,7 @@ vector<pair<int, int>> processGenMapFrequencyVector(vector<uint8_t> frequency_ve
     // }
 
 
-    return genmap_frequency_matrix;
+    return genmap_candidates;
 }
 
 typedef Iterator<StringSet<DnaString>>::Type TStringSetIterator;
@@ -194,23 +216,6 @@ map<int, vector<pair<int, DnaString>>> foundMatches;
 StringSet<DnaString> sequences;
 
 bool print_progress = false;
-
-
-
-/**
- * The maps in this program have a vector at each key. Adding a new element to key x means
- * "add element to the vector at key x" or, if key x has not been initialized yet, "add a
- * vector to key x, then add the element to that vector". This helper function allows us
- * to define the type of the element to be added.
- */
-template<typename T> void addToMap(map<int, vector<T>>& map, int key, T item) {
-    if(map.count(key) > 0) //if it already exist
-        map[key].push_back(item);
-    else
-        map.insert(pair<int, vector<T>>(key,vector<T> (1, item)));
-}
-
-
 
 /**
  * A time vector in this program is a vector with 3 ints:
