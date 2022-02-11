@@ -118,7 +118,7 @@ vector<pair<int, int>> processGenMapFrequencyVector(vector<uint8_t> frequency_ve
 
 
     //vector<int> nth_largest_vector;
-    int nth_largest = 2;
+    int nth_largest = 1;
 
     //std::copy(frequency_vector.begin(), frequency_vector.end(), std::ostream_iterator<int>(std::cout, " "));
     //std::cout << '\n';
@@ -139,14 +139,7 @@ vector<pair<int, int>> processGenMapFrequencyVector(vector<uint8_t> frequency_ve
             cout << "nth largest num " << nth_largest_num << endl;
         }
 
-
-        int current_sequence_number;
-        if((i + 1) % sequence_length == 0) { //if it's the end of a sequence
-            current_sequence_number = i / sequence_length;
-            cout << "--------------------------------------------------------- current seq num " << current_sequence_number << endl;
-            //genmap_candidates.push_back(pair<int, int>(current_sequence_number, pos));
-
-        }
+        int current_sequence_number = i / sequence_length;
 
         if(frequency_vector[i] >= nth_largest_num) {
 
