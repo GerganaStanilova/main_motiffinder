@@ -98,6 +98,17 @@ template<typename T> void addToMap(map<int, vector<T>>& map, int key, T item) {
         map.insert(pair<int, vector<T>>(key,vector<T> (1, item)));
 }
 
+void outputMap(map<int, vector<int>>  candidates) {
+
+    for(pair<int, vector<int>> candidate : candidates){
+        cout << candidate.first << " : { ";
+        for(int i = 0; i < candidate.second.size(); i++) {
+            cout << candidate.second.at(i) << " ";
+        }
+        cout << "}" << endl;
+    }
+}
+
 vector<pair<int, int>> processGenMapFrequencyVector(vector<uint8_t> frequency_vector, int no_of_sequences, int sequence_length) { //added &
     vector<pair<int, int>> genmap_candidates;
     map<int, vector<int>> genmap_candidate_seq_pos;
@@ -133,19 +144,20 @@ vector<pair<int, int>> processGenMapFrequencyVector(vector<uint8_t> frequency_ve
         if((i + 1) % sequence_length == 0) { //if it's the end of a sequence
             current_sequence_number = i / sequence_length;
             cout << "--------------------------------------------------------- current seq num " << current_sequence_number << endl;
-            genmap_candidates.push_back(pair<int, int>(current_sequence_number, pos));
+            //genmap_candidates.push_back(pair<int, int>(current_sequence_number, pos));
 
-            //cout << "line " << current_sequence_number << " pos " << genmap_frequency_matrix[i].second << ": " << frequency_vector_int[i] << endl;
         }
 
         if(frequency_vector[i] >= nth_largest_num) {
+
             cout << "frequency vector value " << frequency_vector_int[i];
             pos = ((i + 1) % sequence_length) - 1;
             cout << " pos " << pos << endl;
-            addToMap<pair<int, int>>(genmap_candidate_seq_pos, current_sequence_number, pos);
+            addToMap<int>(genmap_candidate_seq_pos, current_sequence_number, pos);
+            cout << "--------------------------------------------------------- seq num added to map " << current_sequence_number << endl;
         }
-
     }
+    outputMap(genmap_candidate_seq_pos);
 
 
     /*for(pair<int, int> pos : starting_positions) {
