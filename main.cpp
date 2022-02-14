@@ -13,11 +13,16 @@
 using namespace std;
 using namespace seqan;
 
-/*
+/**
+ * GENMAP FUNCTION
+ *
  * GenMap function to load raw files
  * https://github.com/cpockrandt/genmap/wiki/#how-to-load-raw-files-map-freq8-freq16-in-c
+ *
+ * @tparam value_t
+ * @param vec
+ * @param path
  */
-
 template <typename value_t>
 void load(vector<value_t> & vec, string path)
 {
@@ -36,6 +41,15 @@ void load(vector<value_t> & vec, string path)
 }
 
 
+/**
+ * GENMAP FUNCTION
+ *
+ * @param path_filename
+ * @param filename
+ * @param motif_length
+ * @param mismatches
+ * @return
+ */
 vector<uint8_t> getGenMapFrequencyVector(string path_filename, string filename, int motif_length, int mismatches) {
     vector<uint8_t> frequency_vector;
     string output_folder_name = "_output_";
@@ -63,21 +77,33 @@ vector<uint8_t> getGenMapFrequencyVector(string path_filename, string filename, 
     return frequency_vector;
 }
 
-/*
+
+/**
+ * HELPER FUNCTION
+ *
  * Remove duplicates
  * https://www.techiedelight.com/remove-duplicates-vector-cpp/
+ *
+ * @param v
+ * @return
  */
-
 vector<int> removeDuplicates(vector<int> v) {
     sort(v.begin(), v.end());
     v.erase(unique(v.begin(), v.end()), v.end());
     return v;
 }
-/*
- *
- * https://cppsecrets.com/users/41129711010797106994610011511264103109971051084699111109/Find-the-Nth-largest-element-in-a-vector.php
- */
 
+
+/**
+ * HELPER FUNCTION
+ *
+ * Function to find the nth largest element in a vector
+ * https://cppsecrets.com/users/41129711010797106994610011511264103109971051084699111109/Find-the-Nth-largest-element-in-a-vector.php
+ *
+ * @param v
+ * @param nthLargestNumber
+ * @return
+ */
 int findNthLargestNumber(vector<int>& v, int nthLargestNumber) {
     // only two lines of code required.
     v = removeDuplicates(v);
@@ -85,11 +111,19 @@ int findNthLargestNumber(vector<int>& v, int nthLargestNumber) {
     return v[v.size() - nthLargestNumber];
 }
 
+
 /**
+ * HELPER FUNCTION
+ *
  * The maps in this program have a vector at each key. Adding a new element to key x means
  * "add element to the vector at key x" or, if key x has not been initialized yet, "add a
  * vector to key x, then add the element to that vector". This helper function allows us
  * to define the type of the element to be added.
+ *
+ * @tparam T
+ * @param map
+ * @param key
+ * @param item
  */
 template<typename T> void addToMap(map<int, vector<T>>& map, int key, T item) {
     if(map.count(key) > 0) //if it already exist
@@ -98,6 +132,12 @@ template<typename T> void addToMap(map<int, vector<T>>& map, int key, T item) {
         map.insert(pair<int, vector<T>>(key,vector<T> (1, item)));
 }
 
+/**
+ * HELPER FUNCTION
+ *
+ *
+ * @param candidates
+ */
 void outputMap(map<int, vector<int>>  candidates) {
 
     for(pair<int, vector<int>> candidate : candidates){
@@ -109,6 +149,16 @@ void outputMap(map<int, vector<int>>  candidates) {
     }
 }
 
+
+/**
+ * GENMAP FUNCTION
+ *
+ *
+ * @param frequency_vector
+ * @param no_of_sequences
+ * @param sequence_length
+ * @return
+ */
 map<int, vector<int>>  processGenMapFrequencyVector(vector<uint8_t> frequency_vector, int no_of_sequences, int sequence_length) { //added &
     map<int, vector<int>> genmap_candidate_seq_pos;
 
@@ -178,6 +228,9 @@ map<int, vector<int>>  processGenMapFrequencyVector(vector<uint8_t> frequency_ve
     return genmap_candidate_seq_pos;
 }
 
+
+
+
 typedef Iterator<StringSet<DnaString>>::Type TStringSetIterator;
 
 
@@ -200,10 +253,16 @@ StringSet<DnaString> sequences;
 
 bool print_progress = false;
 
+
 /**
+ * HELPER FUNCTION
+ *
  * A time vector in this program is a vector with 3 ints:
  * Index 0 is the hours, 1 the minutes, 2 the seconds.
  * This helper function returns a string in the format of hh:mm:ss.
+ *
+ * @param t
+ * @return
  */
 string timeVectorToString(vector<int>& t) { //added a &
     string result;
@@ -213,13 +272,19 @@ string timeVectorToString(vector<int>& t) { //added a &
 }
 
 
-
 /**
+ * HELPER FUNCTION
+ *
  * This helper function parses a csv file into a 2 dimensional vector of strings.
  * The delimiter can be specified optionally, the default is the tab character.
  * You can also specify from which line on the csv should be parsed, as many csv
  * files have headers on line 0 (eg the parameters csv for this program).
  * Cell at row1 col5 would be accessed with vector[0][4]
+ *
+ * @param stream
+ * @param delim
+ * @param startRow
+ * @return
  */
 vector<vector<string>> csvParseIntoVector(istream& stream, char delim = '\t', int startRow = 0) {
     vector<vector<string>> result;
@@ -263,9 +328,14 @@ pair<DnaString, int> bestConsensusOf(vector<pair<DnaString, int>>& conseqs) {
 }
 
 
-
 /**
- * datasets a double x to n decimals.
+ * HELPER FUNCTION
+ *
+ * Rounds a double x to n decimals.
+ *
+ * @param num
+ * @param precision
+ * @return
  */
 double roundWithPrecision(double num, int precision) {
     double factor = pow(10.0, (double) precision+1);
@@ -273,20 +343,29 @@ double roundWithPrecision(double num, int precision) {
 }
 
 
-
 /**
+ * PROJECTION FUNCTION
+ *
  * This function is particularly used in creating a bitmap in random projections.
  * It returns characters of 1 or 0, since seqans Bitmap accepts only characters.
+ *
+ * @param number
+ * @return
  */
 char getOneOrZero(int number) {
     return (number > 0) ? '1' : '0';
 }
 
 
-
 /**
+ * HELPER FUNCTION
+ *
  * Get the hamming distance of two DnaStrings.
  * from https://www.geeksforgeeks.org/hamming-distance-two-strings/
+ *
+ * @param str1
+ * @param str2
+ * @return
  */
 int hammingDist(DnaString& str1, DnaString& str2) {
     int i = 0, count = 0;
@@ -299,9 +378,15 @@ int hammingDist(DnaString& str1, DnaString& str2) {
 }
 
 
-
 /**
+ * HELPER FUNCTION
+ *
  * Return a substr of a DnaString.
+ *
+ * @param seq
+ * @param start
+ * @param length
+ * @return
  */
 DnaString substr(DnaString& seq, int start, int length) {
     DnaString res;
@@ -311,9 +396,14 @@ DnaString substr(DnaString& seq, int start, int length) {
 }
 
 
-
 /**
+ * PROJECTION FUNCTION
+ *
  * Return a bitmap with k ones and l-k zeros. The ones and zeros are uniformly distributed.
+ *
+ * @param motif_length
+ * @param projection_length
+ * @return
  */
 String<char> getRandomBitmap(int motif_length, int projection_length) {
     String<char> bitmap; random_device rd; mt19937 mt(rd());
@@ -324,10 +414,15 @@ String<char> getRandomBitmap(int motif_length, int projection_length) {
 }
 
 
-
 /**
+ * PROJECTION FUNCTION
+ *
  * Randomly choose k position for every possible motif in all sequences.
  * Create a hash h from the k positions, then save the current position in a bucket at index h.
+ *
+ * @param motif_length
+ * @param projection_length
+ * @param buckets
  */
 void randomProjections(int& motif_length, int& projection_length,map<int, vector<pair<int,int>>>& buckets) {
     String<char> bitmap = getRandomBitmap(motif_length, projection_length);
@@ -342,6 +437,12 @@ void randomProjections(int& motif_length, int& projection_length,map<int, vector
     }
 }
 
+/**
+ * PROJECTION FUNCTION
+ *
+ *
+ *
+ */
 
 void addBackgroundProbability(
         float* background_probability_distribution,
@@ -356,7 +457,13 @@ void addBackgroundProbability(
 
 
 /**
+ * PROJECTION FUNCTION
+ *
  * Initializing weight matrix
+ *
+ * @param motif_length
+ * @param bucket
+ * @param Wh
  */
 void initWh(int& motif_length, pair<int, vector<pair<int, int>>>& bucket, vector<vector<float>>& Wh) {
     Wh = vector<vector<float>>(4, vector<float>(motif_length, 0));
@@ -371,6 +478,14 @@ void initWh(int& motif_length, pair<int, vector<pair<int, int>>>& bucket, vector
     addBackgroundProbability(P, Wh, motif_length, bucket.second.size());
 }
 
+/**
+ *
+ *
+ *
+ * @param motif_length
+ * @param Wh
+ * @param posM
+ */
 
 void refine(int& motif_length, vector<vector<float>>& Wh, vector<vector<float>>& posM) {
     vector<vector<float>> ref_Wh_tmp(Wh);
@@ -418,9 +533,16 @@ void refine(int& motif_length, vector<vector<float>>& Wh, vector<vector<float>>&
 
 
 /**
+ * PROJECTION FUNCTION
+ *
  * create the stringSet T of the l-mers
  * take an l-mer from each sequence using the posM
  * (fill T with this bucket's lmers)
+ *
+ * @param motif_length
+ * @param d
+ * @param posM
+ * @param bucket_conseqs
  */
 void getConsensusSeq(int& motif_length, int& d, vector<vector<float>>& posM, vector<pair<DnaString, int>>& bucket_conseqs) {
 
@@ -468,6 +590,32 @@ void getConsensusSeq(int& motif_length, int& d, vector<vector<float>>& posM, vec
 }
 
 
+/**
+ * GENMAP FUNCTION
+ *
+ *
+ *
+ * @param motif_length
+ * @param starting_positions
+ * @return
+ */
+
+StringSet<DnaString> filterGenMapCandidates(int& motif_length, map<int, vector<int>>& starting_positions) {
+    StringSet<DnaString> probable_motif_lmers;
+    int greedy_error = 3;
+
+    return probable_motif_lmers;
+};
+
+/**
+ * GENMAP FUNCTION
+ *
+ *
+ * @param motif_length
+ * @param starting_positions
+ * @return
+ */
+
 DnaString getConsesusByGenMapFrequency(int& motif_length, map<int, vector<int>>& starting_positions) {
     StringSet<DnaString> probable_motif_lmers;
     DnaString conseq_of_motif_lmers; //consensus sequence
@@ -509,7 +657,10 @@ DnaString getConsesusByGenMapFrequency(int& motif_length, map<int, vector<int>>&
     return conseq_of_motif_lmers;
 }
 
+
 /**
+ * HELPER FUNCTION
+ *
  * Convert an int of seconds into a vector of three ints.
  * Index 0 for hours, 1 minutes and 2 seconds.
  */
@@ -520,8 +671,9 @@ vector<int> secondsToHours(int seconds) {
 }
 
 
-
 /**
+ * HELPER FUNCTION
+ *
  * Print the progress of the process.
  */
 void printProgress() {
@@ -546,12 +698,22 @@ void printProgress() {
 }
 
 
-
 /**
- * For each bucket that has a size euqals or greater than the threshold,
- * compute and refine weight and position matrix. Then save the consesus sequence
+ * PROJECTION FUNCTION
+ *
+ * For each bucket that has a size equals or greater than the threshold,
+ * compute and refine weight and position matrix. Then save the consensus sequence
  * of the bucket. This function is designed to be run by multiple threads. Each thread
  * gets a range of buckets to process. That range is bstart till bend.
+ *
+ * @param motif_length
+ * @param threshold
+ * @param trial
+ * @param bstart
+ * @param bend
+ * @param buckets
+ * @param bucket_conseqs
+ * @return
  */
 bool mf(int motif_length, int threshold, int trial, int bstart, int bend, map<int, vector<pair<int, int>>>& buckets, vector<pair<DnaString, int>>& bucket_conseqs) {
     int i = 0;
@@ -573,9 +735,10 @@ bool mf(int motif_length, int threshold, int trial, int bstart, int bend, map<in
 }
 
 
-
 /**
- * The main part of the program. The magic happens here.
+ * PROJECTION FUNCTION
+ *
+ * The main part of the program.
  * This function is designed to spawn as many threads as possible
  * and share the hard work among them. Also, for every trial, it adds
  * the best consensus sequence to a vector. In the end it takes
@@ -621,6 +784,15 @@ DnaString runProjection(){
     return consensus_sequencs.first;
 }
 
+/**
+ * GENMAP FUNCTION
+ *
+ * @param motif_length
+ * @param frequency_vector
+ * @param no_of_sequences
+ * @param sequence_length
+ * @return
+ */
 
 DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length) { //added &
     cout << "running _not_ projection..." << endl;
@@ -640,10 +812,14 @@ DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_
 };
 
 
-
 /**
+ *  HELPER FUNCTION
+ *
  * Makes use of the seqan::find function to find the computed pattern in the sequences.
  * We want to print out the found matches and their positions.
+ *
+ * @param num_of_seqs
+ * @param pattern
  */
 void printPositions(int num_of_seqs, DnaString pattern) {
     auto delegate = [](auto & iter, DnaString const & needle, uint8_t errors) {
@@ -670,10 +846,13 @@ void printPositions(int num_of_seqs, DnaString pattern) {
 }
 
 
-
 /**
+ * HELPER FUNCTION
+ *
  * If a planted motif csv is given, check the found matches against the
  * positions in the planted motif file. Compute then a performance coefficient and print it.ca
+ *
+ * @param pattern
  */
 void printPerformanceCoefficient(DnaString pattern) {
     int z = 0;
