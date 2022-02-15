@@ -138,12 +138,13 @@ template<typename T> void addToMap(map<int, vector<T>>& map, int key, T item) {
  *
  * @param candidates
  */
-void outputMap(map<int, vector<int>>  candidates) {
+void outputMap(map<int, vector<pair<int, bool>>>  candidates) {
 
-    for(pair<int, vector<int>> candidate : candidates){
-        cout << candidate.first << " : { ";
+    for(pair<int, vector<pair<int, bool>>> candidate : candidates){
+        int sequence_number = candidate.first;
+        cout << sequence_number << " : { ";
         for(int i = 0; i < candidate.second.size(); i++) {
-            cout << candidate.second.at(i) << " ";
+            cout << candidate.second.at(i).first << " ";
         }
         cout << "}" << endl;
     }
@@ -159,8 +160,9 @@ void outputMap(map<int, vector<int>>  candidates) {
  * @param sequence_length
  * @return
  */
-map<int, vector<int>>  processGenMapFrequencyVector(vector<uint8_t> frequency_vector, int no_of_sequences, int sequence_length) { //added &
-    map<int, vector<int>> genmap_candidate_seq_pos;
+
+map<int, vector<pair<int, bool>>>  processGenMapFrequencyVector(vector<uint8_t> frequency_vector, int no_of_sequences, int sequence_length) { //added &
+    map<int, vector<pair<int, bool>>> genmap_candidate_seq_pos;
 
     int nth_largest = 4;
 
@@ -185,7 +187,7 @@ map<int, vector<int>>  processGenMapFrequencyVector(vector<uint8_t> frequency_ve
 
         if(frequency_vector[i] >= nth_largest_num) {
             pos = ((i + 1) % sequence_length) - 1;
-            addToMap<int>(genmap_candidate_seq_pos, current_sequence_number, pos);
+            addToMap<pair<int, bool>>(genmap_candidate_seq_pos, current_sequence_number, pair<int, bool>(pos, false));
         }
     }
     outputMap(genmap_candidate_seq_pos);
@@ -227,9 +229,6 @@ map<int, vector<int>>  processGenMapFrequencyVector(vector<uint8_t> frequency_ve
 
     return genmap_candidate_seq_pos;
 }
-
-
-
 
 typedef Iterator<StringSet<DnaString>>::Type TStringSetIterator;
 
@@ -389,10 +388,10 @@ int hammingDist(DnaString& str1, DnaString& str2) {
  * @return
  */
 DnaString substr(DnaString& seq, int start, int length) {
-    DnaString res;
+    DnaString substring;
     for(int i = start; i < start + length; i++)
-        res += seq[i];
-    return res;
+        substring += seq[i];
+    return substring;
 }
 
 
@@ -616,30 +615,22 @@ StringSet<DnaString> filterGenMapCandidates(int& motif_length, map<int, vector<i
  * @return
  */
 
-DnaString getConsesusByGenMapFrequency(int& motif_length, map<int, vector<int>>& starting_positions) {
+DnaString getConsesusByGenMapFrequency(int& motif_length, map<int, vector<pair<int, bool>>>& candidate_seq_pos) {
     StringSet<DnaString> probable_motif_lmers;
     DnaString conseq_of_motif_lmers; //consensus sequence
 
-    // Initialize T
-    for(pair<int, vector<int>> pos : starting_positions) {
+    for(pair<int, vector<pair<int, bool>>> pos : candidate_seq_pos) {
         DnaString current_lmer;
-        for(int i = 0; i < pos.second.size(); i++) {
-            current_lmer = substr(sequences[pos.first], pos.second.at(i), motif_length);
-            cout << pos.first << " : " << current_lmer << endl;
-
+        int seq_number = pos.first;
+        vector<pair<int, bool>> candidate_positions = pos.second;
+        for(int i = 0; i < candidate_positions.size(); i++) {
+            int candidate_pos_value = candidate_positions.at(i).first;
+            bool candidate_flag_value = candidate_positions.at(i).second;
+            current_lmer = substr(sequences[seq_number], candidate_pos_value, motif_length);
+            cout << seq_number << " : " << current_lmer << endl;
             appendValue(probable_motif_lmers, current_lmer);
         }
-
-
-
     }
-
-    /*DnaString substr(DnaString& seq, int start, int length) {
-	DnaString res;
-	for(int i = start; i < start + length; i++)
-		res += seq[i];
-	return res;
-    }*/
 
     for(int j = 0; j < motif_length; j++) {
         int scores[4] = {0};
@@ -654,6 +645,7 @@ DnaString getConsesusByGenMapFrequency(int& motif_length, map<int, vector<int>>&
         }
         conseq_of_motif_lmers += character;
     }
+
     return conseq_of_motif_lmers;
 }
 
@@ -797,7 +789,7 @@ DnaString runProjection(){
 DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length) { //added &
     cout << "running _not_ projection..." << endl;
     DnaString consensus_sequence;
-    map<int, vector<int>> processed_frequency_vector;
+    map<int, vector<pair<int, bool>>> processed_frequency_vector;
 
 
     cout << "processing vector..." << endl;
