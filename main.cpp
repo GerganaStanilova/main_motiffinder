@@ -138,13 +138,14 @@ template<typename T> void addToMap(map<int, vector<T>>& map, int key, T item) {
  *
  * @param candidates
  */
-void outputMap(map<int, vector<pair<int, bool>>>  candidates) {
+void outputMap(map<int, vector<pair<int, int>>>  candidates) {
 
-    for(pair<int, vector<pair<int, bool>>> candidate : candidates){
+    for(pair<int, vector<pair<int, int>>> candidate : candidates){
         int sequence_number = candidate.first;
-        cout << sequence_number << " : { ";
+
+        cout << sequence_number  << " : { ";
         for(int i = 0; i < candidate.second.size(); i++) {
-            cout << candidate.second.at(i).first << " ";
+            cout << candidate.second.at(i).second << " ";
         }
         cout << "}" << endl;
     }
@@ -161,10 +162,10 @@ void outputMap(map<int, vector<pair<int, bool>>>  candidates) {
  * @return
  */
 
-map<int, vector<pair<int, bool>>>  processGenMapFrequencyVector(vector<uint8_t> frequency_vector, int no_of_sequences, int sequence_length) { //added &
-    map<int, vector<pair<int, bool>>> genmap_candidate_seq_pos;
+map<int, vector<pair<int, int>>>  processGenMapFrequencyVector(vector<uint8_t> frequency_vector, int no_of_sequences, int sequence_length) { //added &
+    map<int, vector<pair<int, int>>> genmap_candidate_seq_pos;
 
-    int nth_largest = 4;
+    int nth_largest = 3;
 
     //std::copy(frequency_vector.begin(), frequency_vector.end(), std::ostream_iterator<int>(std::cout, " "));
     //std::cout << '\n';
@@ -187,7 +188,7 @@ map<int, vector<pair<int, bool>>>  processGenMapFrequencyVector(vector<uint8_t> 
 
         if(frequency_vector[i] >= nth_largest_num) {
             pos = ((i + 1) % sequence_length) - 1;
-            addToMap<pair<int, bool>>(genmap_candidate_seq_pos, current_sequence_number, pair<int, bool>(pos, false));
+            addToMap<pair<int, int>>(genmap_candidate_seq_pos, current_sequence_number, pair<int, int>(current_sequence_number, pos));
         }
     }
     outputMap(genmap_candidate_seq_pos);
@@ -477,6 +478,7 @@ void initWh(int& motif_length, pair<int, vector<pair<int, int>>>& bucket, vector
     addBackgroundProbability(P, Wh, motif_length, bucket.second.size());
 }
 
+
 /**
  *
  *
@@ -615,20 +617,24 @@ StringSet<DnaString> filterGenMapCandidates(int& motif_length, map<int, vector<i
  * @return
  */
 
-DnaString getConsesusByGenMapFrequency(int& motif_length, map<int, vector<pair<int, bool>>>& candidate_seq_pos) {
+DnaString getConsesusByGenMapFrequency(int& motif_length, map<int, vector<pair<int, int>>>& candidate_seq_pos) {
     StringSet<DnaString> probable_motif_lmers;
     DnaString conseq_of_motif_lmers; //consensus sequence
 
-    for(pair<int, vector<pair<int, bool>>> pos : candidate_seq_pos) {
+    for(pair<int, vector<pair<int, int>>> pos : candidate_seq_pos) {
         DnaString current_lmer;
         int seq_number = pos.first;
-        vector<pair<int, bool>> candidate_positions = pos.second;
+        vector<pair<int, int>> candidate_positions = pos.second;
         for(int i = 0; i < candidate_positions.size(); i++) {
-            int candidate_pos_value = candidate_positions.at(i).first;
-            bool candidate_flag_value = candidate_positions.at(i).second;
-            current_lmer = substr(sequences[seq_number], candidate_pos_value, motif_length);
+            //bool candidate_flag = candidate_positions.at(i).first;
+            int candidate_pos = candidate_positions.at(i).second;
+
+
+            current_lmer = substr(sequences[seq_number], candidate_pos, motif_length);
             cout << seq_number << " : " << current_lmer << endl;
             appendValue(probable_motif_lmers, current_lmer);
+
+
         }
     }
 
@@ -789,7 +795,7 @@ DnaString runProjection(){
 DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length) { //added &
     cout << "running _not_ projection..." << endl;
     DnaString consensus_sequence;
-    map<int, vector<pair<int, bool>>> processed_frequency_vector;
+    map<int, vector<pair<int, int>>> processed_frequency_vector;
 
 
     cout << "processing vector..." << endl;
@@ -799,6 +805,21 @@ DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_
     consensus_sequence = getConsesusByGenMapFrequency(motif_length, processed_frequency_vector);
 
     cout << "consensus sequence: " << consensus_sequence << endl;
+
+
+    vector<pair<DnaString, int>> bucket_conseqs;
+    for(pair<int, vector<pair<int, int>>> bucket : processed_frequency_vector){
+        vector<vector<float>> Wh;
+        vector<vector<float>> posM = vector<vector<float>>(length(sequences), (vector<float>(length(sequences[0]) - motif_length + 1, 0)));
+        initWh(motif_length, bucket, Wh); //initialize weight matrix Wh for prob of a base in the motif
+        for(int refine_iter = 0; refine_iter < 200; refine_iter++) //Refine weight matrix W and posM until convergence
+            refine(motif_length, Wh, posM);
+        getConsensusSeq(motif_length, d, posM, bucket_conseqs); //CONSENSUS SEQUENCE
+    }
+    pair<DnaString, int> consensus_sequencs = bestConsensusOf(bucket_conseqs); //consensus sequence of best bucket (smallest score(T))
+    cout << "searched consensus sequence: [" << consensus_sequencs.first << "] with a score of " << consensus_sequencs.second << endl;
+    consensus_sequence = consensus_sequencs.first;
+
 
     return consensus_sequence;
 };
