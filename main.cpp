@@ -13,6 +13,8 @@
 using namespace std;
 using namespace seqan;
 
+
+
 /**
  * GENMAP FUNCTION
  *
@@ -51,30 +53,30 @@ void load(vector<value_t> & vec, string path)
  * @return
  */
 vector<uint8_t> getGenMapFrequencyVector(string path_filename, string filename, int motif_length, int mismatches) {
-    vector<uint8_t> frequency_vector;
-    string output_folder_name = "_output_";
-    string genmap_command =
-            "genmap index -F " + path_filename+".fasta" + " -I ./_indeces_;"
-            + " genmap map "
-            + " -E " + to_string(mismatches)
-            + " -K " + to_string(motif_length) + " -I ./_indeces_"
-            + " -O ./_output_ -r -fs";
+	vector<uint8_t> frequency_vector;
+	string output_folder_name = "_output_";
+	string genmap_command =
+		"genmap index -F " + path_filename+".fasta" + " -I ./_indeces_;"
+		+ " genmap map "
+		+ " -E " + to_string(mismatches)
+		+ " -K " + to_string(motif_length) + " -I ./_indeces_"
+		+ " -O ./_output_ -r -fs";
 
-    //mkdir(output_folder_name.c_str(), 777);
-    size_t ftpos = filename.find(".fasta");
-    filename = filename.substr(0, ftpos);
-    string mkdir = "mkdir _output_";
-    system(mkdir.c_str());
-    cout << "running " << genmap_command << endl;
-    system(genmap_command.c_str());
-    load(frequency_vector, "./_output_/" + filename + ".genmap.freq8");
-    //experimental::filesystem::remove_all("./_output_/");
-    //experimental::filesystem::remove_all("./_indeces_/");
-    system("rm -rf ./_output_");
-    system("rm -rf ./_indeces_");
-    cout << "length of 1. fv: " << length(frequency_vector) << endl;
-    cout << "./_output_/" << filename << ".freq8" << endl;
-    return frequency_vector;
+	//mkdir(output_folder_name.c_str(), 777);
+	size_t ftpos = filename.find(".fasta");
+	filename = filename.substr(0, ftpos);
+	string mkdir = "mkdir _output_";
+	system(mkdir.c_str());
+	cout << "running " << genmap_command << endl;
+	system(genmap_command.c_str());
+	load(frequency_vector, "./_output_/" + filename + ".genmap.freq8");
+	//experimental::filesystem::remove_all("./_output_/");
+	//experimental::filesystem::remove_all("./_indeces_/");
+	system("rm -rf ./_output_");
+	system("rm -rf ./_indeces_");
+	cout << "length of 1. fv: " << length(frequency_vector) << endl;
+	cout << "./_output_/" << filename << ".freq8" << endl;
+	return frequency_vector;
 }
 
 
@@ -138,9 +140,9 @@ template<typename T> void addToMap(map<int, vector<T>>& map, int key, T item) {
  *
  * @param candidates
  */
-void outputMap(map<int, vector<pair<int, int>>>  candidates) {
+void outputMap(map<int, vector<pair<int,int>>>  candidates) {
 
-    for(pair<int, vector<pair<int, int>>> candidate : candidates){
+    for(pair<int, vector<pair<int,int>>> candidate : candidates){
         int sequence_number = candidate.first;
 
         cout << sequence_number  << " : { ";
@@ -162,8 +164,8 @@ void outputMap(map<int, vector<pair<int, int>>>  candidates) {
  * @return
  */
 
-vector<pair<int, int>>  processGenMapFrequencyVector(vector<uint8_t> frequency_vector, int no_of_sequences, int sequence_length) { //added &
-    vector<pair<int, int>> candidate_starting_positions;
+vector<pair<int,int>>  processGenMapFrequencyVector(vector<uint8_t> frequency_vector, int no_of_sequences, int sequence_length) { //added &
+    vector<pair<int,int>> candidate_starting_positions;
 
     int nth_largest = 3;
 
@@ -188,7 +190,7 @@ vector<pair<int, int>>  processGenMapFrequencyVector(vector<uint8_t> frequency_v
 
         if(frequency_vector[i] >= nth_largest_num) {
             pos = ((i + 1) % sequence_length) - 1;
-            candidate_starting_positions.push_back(pair<int, int>(current_sequence_number, pos));
+            candidate_starting_positions.push_back(pair<int,int>(current_sequence_number, pos));
         }
     }
 
@@ -197,7 +199,7 @@ vector<pair<int, int>>  processGenMapFrequencyVector(vector<uint8_t> frequency_v
 
 
 
-    /*for(pair<int, int> pos : candidate_starting_positions) {
+    /*for(pair<int,int> pos : candidate_starting_positions) {
         DnaString current_lmer;
         current_lmer = substr(sequences[pos.first], pos.second, motif_length);
         cout << pos.first << " : " << current_lmer << endl;
@@ -212,7 +214,7 @@ vector<pair<int, int>>  processGenMapFrequencyVector(vector<uint8_t> frequency_v
         if((i + 1) % sequence_length == 0) {
 			maxValues.push_back(max);
             int current_sequence_number = i / sequence_length;
-			genmap_frequency_matrix.push_back(pair<int, int>(current_sequence_number, pos));
+			genmap_frequency_matrix.push_back(pair<int,int>(current_sequence_number, pos));
 			cout << "line " << current_sequence_number << " pos " << pos << ": " << max << endl;
 			max = 0;
         }
@@ -222,7 +224,7 @@ vector<pair<int, int>>  processGenMapFrequencyVector(vector<uint8_t> frequency_v
     //
     // for(int i = 0, j = 0, pos = 0; i < length(frequency_vector); i++) {
     // 	if( maxValues[j] = frequency_vector[i]) {
-    // 		genmap_frequency_matrix.push_back(pair<int, int>(j, pos));
+    // 		genmap_frequency_matrix.push_back(pair<int,int>(j, pos));
     // 		cout << "line " << current_sequence_number << " pos " << pos << ": " << max << endl;
     // 	}
     // 	if((i+1) % sequence_length == 0) {
@@ -268,10 +270,10 @@ bool print_progress = false;
  * @return
  */
 string timeVectorToString(vector<int>& t) { //added a &
-    string result;
-    for(int i = 0; i < t.size(); i++)
-        result += ((t[i] < 10) ? "0" : "") + to_string(t[i]) + ((i < t.size() - 1) ? ":" : "");
-    return result;
+	string result;
+	for(int i = 0; i < t.size(); i++)
+		result += ((t[i] < 10) ? "0" : "") + to_string(t[i]) + ((i < t.size() - 1) ? ":" : "");
+	return result;
 }
 
 
@@ -293,16 +295,16 @@ vector<vector<string>> csvParseIntoVector(istream& stream, char delim = '\t', in
     vector<vector<string>> result;
     string line;
     for(int i = 0; i < startRow; i++) // Skip lines in csv
-        getline(stream, line);
+    	getline(stream, line);
     while(getline(stream, line)) { // parse every other line
-        vector<string> parsedRow;
-        stringstream row(line);
-        string cell;
-        while(getline(row, cell, delim))
-            parsedRow.push_back(cell);
-        if (!row && cell.empty())
-            parsedRow.push_back(""); // add an empty string if trailing delim
-        result.push_back(parsedRow);
+    	vector<string> parsedRow;
+		stringstream row(line);
+		string cell;
+		while(getline(row, cell, delim))
+			parsedRow.push_back(cell);
+		if (!row && cell.empty())
+			parsedRow.push_back(""); // add an empty string if trailing delim
+		result.push_back(parsedRow);
     }
     return result;
 }
@@ -392,10 +394,10 @@ int hammingDist(DnaString& str1, DnaString& str2) {
  * @return
  */
 DnaString substr(DnaString& seq, int start, int length) {
-    DnaString substring;
-    for(int i = start; i < start + length; i++)
+	DnaString substring;
+	for(int i = start; i < start + length; i++)
         substring += seq[i];
-    return substring;
+	return substring;
 }
 
 
@@ -409,11 +411,11 @@ DnaString substr(DnaString& seq, int start, int length) {
  * @return
  */
 String<char> getRandomBitmap(int motif_length, int projection_length) {
-    String<char> bitmap; random_device rd; mt19937 mt(rd());
-    uniform_real_distribution<double> distribution(0.0, 1.0);
-    for (int i = 0, j = projection_length, k = projection_length - motif_length; i < motif_length; i++)
-        append(bitmap, (k == 0 || (distribution(mt) > ((double) (k*-1) / (double) (motif_length - i)) && j != 0)) ? getOneOrZero(j--) : getOneOrZero(k++));
-    return bitmap;
+	String<char> bitmap; random_device rd; mt19937 mt(rd());
+	uniform_real_distribution<double> distribution(0.0, 1.0);
+	for (int i = 0, j = projection_length, k = projection_length - motif_length; i < motif_length; i++)
+		append(bitmap, (k == 0 || (distribution(mt) > ((double) (k*-1) / (double) (motif_length - i)) && j != 0)) ? getOneOrZero(j--) : getOneOrZero(k++));
+	return bitmap;
 }
 
 
@@ -435,7 +437,7 @@ void randomProjections(int& motif_length, int& projection_length,map<int, vector
         int cur_seq = distance(begin(sequences), it);
         for (int i = 0; i < length(*it) - motif_length + 1; ++i){
             int hashV = seqan::hash(indexShape(index), begin(*it) + i);
-            addToMap<pair<int, int>>(buckets, hashV, pair<int, int>(cur_seq, i));
+            addToMap<pair<int,int>>(buckets, hashV, pair<int,int>(cur_seq, i));
         }
     }
 }
@@ -468,9 +470,9 @@ void addBackgroundProbability(
  * @param bucket
  * @param Wh
  */
-void initWh(int& motif_length, pair<int, vector<pair<int, int>>>& bucket, vector<vector<float>>& Wh) {
-    Wh = vector<vector<float>>(4, vector<float>(motif_length, 0));
-    //float P[4] = {0.01, 1000.0, 0.01, 0.00};
+void initWh(int& motif_length, pair<int, vector<pair<int,int>>>& bucket, vector<vector<float>>& Wh) {
+	Wh = vector<vector<float>>(4, vector<float>(motif_length, 0));
+	//float P[4] = {0.01, 1000.0, 0.01, 0.00};
     for(auto p : bucket.second) { //for each element in the bucket
         int i = p.first, j = p.second; // i = seqNr , j = position of l-mer in sequence
         for (int u = 0; u < motif_length; u++) //calculate the frequencies of the bases at every position u in the l-mers
@@ -497,42 +499,42 @@ void refine(int& motif_length, vector<vector<float>>& Wh, vector<vector<float>>&
     vector<float> sums = vector<float>(motif_length, 0);
 
     // Step 2.1
-    for (TStringSetIterator it = begin(sequences); it != end(sequences); ++it){
-        int seq = distance(begin(sequences), it); //seqNr
-        float denominator = 0; //denominator
-        for (int i = 0; i < length(sequences[0]) - motif_length + 1; ++i){
-            float numerator = 1;
-            for (int u = 0; u < motif_length; u++)
-                numerator *= Wh[ordValue((*it)[u+i])][u];
-            posM[seq][i] = numerator; //numerator
-            denominator += numerator;
-        }
-        for(int i = 0; i < length(sequences[0]) - motif_length + 1; ++i)
-            posM[seq][i] /= denominator;
-    }
+	for (TStringSetIterator it = begin(sequences); it != end(sequences); ++it){
+		int seq = distance(begin(sequences), it); //seqNr
+		float denominator = 0; //denominator
+		for (int i = 0; i < length(sequences[0]) - motif_length + 1; ++i){
+			float numerator = 1;
+			for (int u = 0; u < motif_length; u++)
+				numerator *= Wh[ordValue((*it)[u+i])][u];
+			posM[seq][i] = numerator; //numerator
+			denominator += numerator;
+		}
+		for(int i = 0; i < length(sequences[0]) - motif_length + 1; ++i)
+			posM[seq][i] /= denominator;
+	}
 
-    /*
-    start is the position in the motif whose probability we are researching Pâ€™ ordValue(), start
-    i is the number of the sequence
-    pos is the position in the window
-    j is the position in the sequence
-    */
-    for(int start = 0; start < motif_length; start++)
-        for(int i = 0; i < length(sequences); i++)
-            for (int j = start, pos = 0; (pos < length(sequences[0]) - motif_length + 1) ; j++, pos++)
-                ref_Wh_tmp[ordValue(sequences[i][j])][start] += posM[i][pos]; //numerator
+	/*
+	start is the position in the motif whose probability we are researching Pâ€™ ordValue(), start
+	i is the number of the sequence
+	pos is the position in the window
+	j is the position in the sequence
+	*/
+	for(int start = 0; start < motif_length; start++)
+		for(int i = 0; i < length(sequences); i++)
+			for (int j = start, pos = 0; (pos < length(sequences[0]) - motif_length + 1) ; j++, pos++)
+				ref_Wh_tmp[ordValue(sequences[i][j])][start] += posM[i][pos]; //numerator
 
 
-    for(int i = 0; i < 4; i++) //iterating through Wh
-        for(int j = 0; j < motif_length; j++) {
-            //ref_Wh_tmp[i][j] += Wh[i][j];
-            sums[j] += ref_Wh_tmp[i][j]; //for the denominator
-            ref_Wh[i][j] = ref_Wh_tmp[i][j]; //for better overview of numerator and denominator
-        }
+	for(int i = 0; i < 4; i++) //iterating through Wh
+		for(int j = 0; j < motif_length; j++) {
+			//ref_Wh_tmp[i][j] += Wh[i][j];
+			sums[j] += ref_Wh_tmp[i][j]; //for the denominator
+			ref_Wh[i][j] = ref_Wh_tmp[i][j]; //for better overview of numerator and denominator
+		}
 
-    for(int i = 0; i < 4; i++)
-        for(int j = 0; j < motif_length; j++)
-            Wh[i][j] = ref_Wh[i][j] / sums[j];
+	for(int i = 0; i < 4; i++)
+		for(int j = 0; j < motif_length; j++)
+			Wh[i][j] = ref_Wh[i][j] / sums[j];
 }
 
 
@@ -550,11 +552,11 @@ void refine(int& motif_length, vector<vector<float>>& Wh, vector<vector<float>>&
  */
 void getConsensusSeq(int& motif_length, int& d, vector<vector<float>>& posM, vector<pair<DnaString, int>>& bucket_conseqs) {
 
-    StringSet<DnaString> T;
-    DnaString conseq_of_t; //consensus sequence
-    int score_of_T = 0; // the number of l-mers whose hamming distance to the consensus sequence is larger than d
+	StringSet<DnaString> T;
+	DnaString conseq_of_t; //consensus sequence
+	int score_of_T = 0; // the number of l-mers whose hamming distance to the consensus sequence is larger than d
 
-    // Use posM to initialize T
+	// Use posM to initialize T
     for(int i = 0, row = 0, col = 0; i < length(sequences); i++) {
         DnaString current_lmer;
         float local_max = 0;
@@ -586,13 +588,126 @@ void getConsensusSeq(int& motif_length, int& d, vector<vector<float>>& posM, vec
 
     for(auto lmer : T)
         if(hammingDist(conseq_of_t, lmer) > d)
-            score_of_T++;
+        	score_of_T++;
 
     mtx_bucket_conseqs.lock();
     bucket_conseqs.push_back(pair<DnaString, int>(conseq_of_t, score_of_T));
     mtx_bucket_conseqs.unlock();
 }
 
+
+
+vector<pair<int,int>> filterCandidates(StringSet<DnaString>& sequences, vector<pair<int,int>>& all_lmers, int& motif_length, int& greedy_error) {
+    vector<pair<int,int>> candidates;
+    bool not_enough_candidates;
+
+    int first_seq_end = 0;
+
+    // find where the next sequence ends
+    for(int first_s_i = 0; first_s_i < all_lmers.size(); first_s_i++) {
+        if(all_lmers.at(first_s_i).first == 0){
+            first_seq_end++;
+        }
+        else {
+            break;
+        }
+    }
+    vector<pair<int,int>>::const_iterator first1 = all_lmers.begin();
+    vector<pair<int,int>>::const_iterator last1 = all_lmers.begin() + first_seq_end;
+    vector<pair<int,int>>  first_lmers(first1, last1);
+
+    //find the last lmer of the last sequence
+    int last_sequence = all_lmers.at(all_lmers.size()-1).first;
+    int last_lmer = all_lmers.at(all_lmers.size()-1).second;
+
+    //for each lmer of the first sequence
+    for (int first_i = 0; first_i < first_lmers.size(); first_i++) {
+        candidates.push_back(first_lmers.at(first_i)); //add the lmer as the first candidate
+
+        //helper variables to skip checked lmers
+        vector<int> added_is(length(sequences), 0);
+
+        //for each other sequence than the first
+        for(int seq_i = 1; seq_i < length(sequences); seq_i++){
+
+            //separate the current sequence
+            int curr_seq_start = 0;
+            for(int start_i = 0; start_i < all_lmers.size(); start_i++) {
+                if(all_lmers.at(start_i).first < seq_i){
+                    curr_seq_start++;
+                }
+                else {
+                    break;
+                }
+            }
+            int curr_seq_end = curr_seq_start;
+            for(int end_i = curr_seq_start; end_i < all_lmers.size(); end_i++) {
+                if(all_lmers.at(end_i).first == seq_i){
+                    curr_seq_end++;
+                }
+                else {
+                    break;
+                }
+            }
+
+            vector<pair<int,int>>::const_iterator first_curr = all_lmers.begin() + curr_seq_start;
+            vector<pair<int,int>>::const_iterator last_curr = all_lmers.begin() + curr_seq_end;
+            vector<pair<int,int>>  curr_seq_lmers(first_curr, last_curr);
+
+            int cand_size_before = candidates.size(); //used to keep track of the number of candidates before a potential candidate is added
+            int curr_seq_lmers_pos; //used to keep track of the last checked lmer
+            for(int curr_seq_i = 0 + added_is.at(seq_i); curr_seq_i < curr_seq_lmers.size(); curr_seq_i++) {
+                curr_seq_lmers_pos = curr_seq_i;
+                DnaString current_lmer = substr(sequences[curr_seq_lmers.at(curr_seq_i).first], curr_seq_lmers.at(curr_seq_i).second, motif_length);
+                DnaString current_candidate = substr(sequences[candidates.at(0).first], candidates.at(0).second, motif_length);
+
+                if(hammingDist(current_candidate, current_lmer) <= greedy_error) {
+                    if(candidates.size() == 1) {
+                        candidates.push_back(curr_seq_lmers.at(curr_seq_i));
+                        break;
+                    }
+                    else {
+                        bool internal_error = false;
+                        for(int internal_i = 1; internal_i < candidates.size(); internal_i++) {
+                            DnaString internal_candidate = substr(sequences[candidates.at(internal_i).first], candidates.at(internal_i).second, motif_length);
+                            if(hammingDist(internal_candidate, current_lmer) > greedy_error) {
+                                internal_error = true;
+                                break;
+                            }
+                        }
+                        if(!internal_error) {
+                            candidates.push_back(curr_seq_lmers.at(curr_seq_i));
+                        }
+                        if(candidates.size() > cand_size_before) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            //if candidates is not full and we haven't reached the last lmer of the last sequence
+            if(candidates.size() == cand_size_before && seq_i != last_sequence && curr_seq_lmers_pos != last_lmer) {
+                added_is.at(seq_i-1)++; //check the next element of the previous sequence
+                seq_i -= 2; //go to the sequence before (=-2 because the next iteration will add 1 to seq_i)
+                candidates.pop_back();
+            }
+        }
+        if(candidates.size() == length(sequences)) { //if there is a candidate from each sequence that satisfies the hamming distance requirement
+            not_enough_candidates = false;
+            return candidates;
+            break;
+        }
+        else {
+            not_enough_candidates = true;
+        }
+        cout << endl;
+        candidates.clear(); //so a new first candidate can be added to candidates
+    }
+    if(not_enough_candidates) {
+        cout << "Not enough candidates" << endl;
+        return all_lmers;
+    }
+}
 
 /**
  * GENMAP FUNCTION
@@ -604,27 +719,27 @@ void getConsensusSeq(int& motif_length, int& d, vector<vector<float>>& posM, vec
  * @return
  */
 
-map<int, vector<pair<int, int>>> filterGenMapCandidates(int& motif_length, vector<pair<int, int>>& candidate_starting_positions) {
-    map<int, vector<pair<int, int>>>  filtered_starting_positions;
+map<int, vector<pair<int,int>>> filterGenMapCandidates(int& motif_length, vector<pair<int,int>>& candidate_starting_positions, StringSet<DnaString>& sequences) {
+    vector<pair<int,int>> filtered_starting_positions;
+    map<int, vector<pair<int,int>>>  filtered_starting_positions_as_map;
 
-    int greedy_error = 3;
+    int greedy_error = 4;
 
-    /* vector<pair<int, int>>::const_iterator first = filtered_starting_positions.begin() + 1;
-    vector<pair<int, int>>::const_iterator last = filtered_starting_positions.end();
-    vector<pair<int, int>>  sub_vector(first, last); */
+    filtered_starting_positions = filterCandidates(sequences, candidate_starting_positions, motif_length, greedy_error);
+    /* vector<pair<int,int>>::const_iterator first = filtered_starting_positions.begin() + 1;
+    vector<pair<int,int>>::const_iterator last = filtered_starting_positions.end();
+    vector<pair<int,int>>  sub_vector(first, last); */
 
     //Convert to map
-
-
-    for(int i = 0; i < candidate_starting_positions.size(); i++) {
-        addToMap<pair<int, int>>(filtered_starting_positions, candidate_starting_positions.at(i).first, candidate_starting_positions.at(i));
+    for(int i = 0; i < filtered_starting_positions.size(); i++) {
+        addToMap<pair<int,int>>(filtered_starting_positions_as_map, filtered_starting_positions.at(i).first, filtered_starting_positions.at(i));
     }
-    outputMap(filtered_starting_positions);
+    outputMap(filtered_starting_positions_as_map);
 
-
-
-    return filtered_starting_positions;
+    return filtered_starting_positions_as_map;
 };
+
+
 
 /**
  * GENMAP FUNCTION
@@ -635,14 +750,14 @@ map<int, vector<pair<int, int>>> filterGenMapCandidates(int& motif_length, vecto
  * @return
  */
 
-DnaString getConsesusByGenMapFrequency(int& motif_length, map<int, vector<pair<int, int>>>& filtered_starting_positions) {
+DnaString getConsesusByGenMapFrequency(int& motif_length, map<int, vector<pair<int,int>>>& filtered_starting_positions) {
     StringSet<DnaString> probable_motif_lmers;
     DnaString genmap_consensus_sequence; //consensus sequence
 
-    for(pair<int, vector<pair<int, int>>> pos : filtered_starting_positions) {
+    for(pair<int, vector<pair<int,int>>> pos : filtered_starting_positions) {
         DnaString current_lmer;
         int seq_number = pos.first;
-        vector<pair<int, int>> candidate_positions = pos.second;
+        vector<pair<int,int>> candidate_positions = pos.second;
         for(int i = 0; i < candidate_positions.size(); i++) {
             //bool candidate_flag = candidate_positions.at(i).first;
             int candidate_pos = candidate_positions.at(i).second;
@@ -681,9 +796,9 @@ DnaString getConsesusByGenMapFrequency(int& motif_length, map<int, vector<pair<i
  * Index 0 for hours, 1 minutes and 2 seconds.
  */
 vector<int> secondsToHours(int seconds) {
-    int hours = seconds / 3600; seconds -= (3600 * hours);
-    int minutes = seconds / 60; seconds -= (60 * minutes);
-    return vector<int> {hours, minutes, seconds};
+	int hours = seconds / 3600; seconds -= (3600 * hours);
+	int minutes = seconds / 60; seconds -= (60 * minutes);
+	return vector<int> {hours, minutes, seconds};
 }
 
 
@@ -693,61 +808,61 @@ vector<int> secondsToHours(int seconds) {
  * Print the progress of the process.
  */
 void printProgress() {
-    while(print_progress) {
-        this_thread::sleep_for(chrono::milliseconds(200)); // refresh rate: around 5 times per second
-        double trial_progress = 100 * (double) done_buckets / (double) buckets_quantity;
-        double dataset_progress = (100 * (double) (done_trials % m) / (double) m) + (trial_progress / m);
-        double overall_progress = (100 * (double) done_datasets / (double) datasets) + (dataset_progress / datasets);
-        int curdec = (int) roundWithPrecision(trial_progress, 0);
-        int diff = chrono::duration_cast<chrono::seconds>(chrono::steady_clock::now() - datasets_start).count(); //now-program_start
-        int total_seconds = (100.0 / overall_progress) * diff;
-        time_left = secondsToHours(total_seconds - diff);
+	while(print_progress) {
+		this_thread::sleep_for(chrono::milliseconds(200)); // refresh rate: around 5 times per second
+		double trial_progress = 100 * (double) done_buckets / (double) buckets_quantity;
+		double dataset_progress = (100 * (double) (done_trials % m) / (double) m) + (trial_progress / m);
+		double overall_progress = (100 * (double) done_datasets / (double) datasets) + (dataset_progress / datasets);
+		int curdec = (int) roundWithPrecision(trial_progress, 0);
+		int diff = chrono::duration_cast<chrono::seconds>(chrono::steady_clock::now() - datasets_start).count(); //now-program_start
+		int total_seconds = (100.0 / overall_progress) * diff;
+		time_left = secondsToHours(total_seconds - diff);
 
-        cout << "\rOAP: " << roundWithPrecision(overall_progress, 0) << "%    "; // Overall Progress
-        cout << "ETA(hh:mm:ss): " << timeVectorToString(time_left) << "    "; // Estimated time left
-        cout << "Dataset [" << tmp_round <<"/"<<datasets << "]: " << roundWithPrecision(dataset_progress, 0) << "%    "; // Dataset progress
-        cout << "Trial [" << tmp_trial << "/" << m << "]: " << curdec << "% ["; // Trial progress
-        for(int i = 0; i < curdec / 5; i++) cout << "#"; // Trial progress bar, reached positions filled with #
-        for(int i = curdec / 5; i < 20; i++) cout << " "; // Trial progress bar, left positions filled with spaces
-        cout << "]       " << flush; // add some spaces to full override previous line, flush the stream onto the console
-    }
+		cout << "\rOAP: " << roundWithPrecision(overall_progress, 0) << "%    "; // Overall Progress
+		cout << "ETA(hh:mm:ss): " << timeVectorToString(time_left) << "    "; // Estimated time left
+		cout << "Dataset [" << tmp_round <<"/"<<datasets << "]: " << roundWithPrecision(dataset_progress, 0) << "%    "; // Dataset progress
+		cout << "Trial [" << tmp_trial << "/" << m << "]: " << curdec << "% ["; // Trial progress
+		for(int i = 0; i < curdec / 5; i++) cout << "#"; // Trial progress bar, reached positions filled with #
+		for(int i = curdec / 5; i < 20; i++) cout << " "; // Trial progress bar, left positions filled with spaces
+		cout << "]       " << flush; // add some spaces to full override previous line, flush the stream onto the console
+	}
 }
 
 
-/**
- * PROJECTION FUNCTION
- *
- * For each bucket that has a size equals or greater than the threshold,
- * compute and refine weight and position matrix. Then save the consensus sequence
- * of the bucket. This function is designed to be run by multiple threads. Each thread
- * gets a range of buckets to process. That range is bstart till bend.
- *
- * @param motif_length
- * @param threshold
- * @param trial
- * @param bstart
- * @param bend
- * @param buckets
- * @param bucket_conseqs
- * @return
- */
-bool mf(int motif_length, int threshold, int trial, int bstart, int bend, map<int, vector<pair<int, int>>>& buckets, vector<pair<DnaString, int>>& bucket_conseqs) {
+ /**
+  * PROJECTION FUNCTION
+  *
+  * For each bucket that has a size equals or greater than the threshold,
+  * compute and refine weight and position matrix. Then save the consensus sequence
+  * of the bucket. This function is designed to be run by multiple threads. Each thread
+  * gets a range of buckets to process. That range is bstart till bend.
+  *
+  * @param motif_length
+  * @param threshold
+  * @param trial
+  * @param bstart
+  * @param bend
+  * @param buckets
+  * @param bucket_conseqs
+  * @return
+  */
+bool mf(int motif_length, int threshold, int trial, int bstart, int bend, map<int, vector<pair<int,int>>>& buckets, vector<pair<DnaString, int>>& bucket_conseqs) {
     int i = 0;
-    for(pair<int, vector<pair<int, int>>> bucket : buckets){
-        if(i >= bstart && i <= bend) {
-            if(bucket.second.size() >= threshold){ //number of pairs = number of elements in the bucket
-                vector<vector<float>> Wh;
-                vector<vector<float>> posM = vector<vector<float>>(length(sequences), (vector<float>(length(sequences[0]) - motif_length + 1, 0)));
-                initWh(motif_length, bucket, Wh); //initialize weight matrix Wh for probability of a base in the motif
-                for(int refine_iter = 0; refine_iter < 5; refine_iter++) //Refine weight matrix W and posM until convergence
-                    refine(motif_length, Wh, posM);
-                getConsensusSeq(motif_length, d, posM, bucket_conseqs); //CONSENSUS SEQUENCE
-            }
-            mtx_done_buckets.lock(); done_buckets++; mtx_done_buckets.unlock();
-        }
-        i++;
-    }
-    return true;
+	for(pair<int, vector<pair<int,int>>> bucket : buckets){
+		if(i >= bstart && i <= bend) {
+			if(bucket.second.size() >= threshold){ //number of pairs = number of elements in the bucket
+				vector<vector<float>> Wh;
+				vector<vector<float>> posM = vector<vector<float>>(length(sequences), (vector<float>(length(sequences[0]) - motif_length + 1, 0)));
+				initWh(motif_length, bucket, Wh); //initialize weight matrix Wh for probability of a base in the motif
+				for(int refine_iter = 0; refine_iter < 5; refine_iter++) //Refine weight matrix W and posM until convergence
+					refine(motif_length, Wh, posM);
+				getConsensusSeq(motif_length, d, posM, bucket_conseqs); //CONSENSUS SEQUENCE
+			}
+			mtx_done_buckets.lock(); done_buckets++; mtx_done_buckets.unlock();
+		}
+		i++;
+	}
+	return true;
 }
 
 
@@ -764,7 +879,7 @@ DnaString runProjection(){
     vector<pair<DnaString, int>> trial_conseqs;
     for(int trial = 1; trial <= m; trial++) { // m = number of trials
         tmp_trial = trial;
-        map<int, vector<pair<int, int>>> buckets;
+        map<int, vector<pair<int,int>>> buckets;
         vector<pair<DnaString, int>> bucket_conseqs;
         randomProjections(l, k, buckets);
         buckets_quantity = length(buckets);
@@ -772,27 +887,27 @@ DnaString runProjection(){
         print_progress = true;
         thread printer(printProgress);
         for(int th = 0; th < noOfThreads; th++) { // parallelism
-            int iters = length(buckets); int span = iters / noOfThreads; int remainers = iters - (span * noOfThreads);
-            int bstart = th * span; int bend = bstart + span - 1;
-            if(th < remainers) {
-                bstart += th;
-                if(th < remainers) bend += (th + 1);
-            } else {
-                bstart += remainers;
-                bend = bstart + span - 1;
-            }
-            thread t1(mf, l, s, trial, bstart, bend, ref(buckets), ref(bucket_conseqs));
-            threads.push_back(move(t1));
+        	int iters = length(buckets); int span = iters / noOfThreads; int remainers = iters - (span * noOfThreads);
+        	int bstart = th * span; int bend = bstart + span - 1;
+        	if(th < remainers) {
+        		bstart += th;
+        		if(th < remainers) bend += (th + 1);
+        	} else {
+        		bstart += remainers;
+        		bend = bstart + span - 1;
+        	}
+        	thread t1(mf, l, s, trial, bstart, bend, ref(buckets), ref(bucket_conseqs));
+        	threads.push_back(move(t1));
 
         }
         for(int th = 0; th < noOfThreads; th++) {
-            threads[th].join();
+        	threads[th].join();
         }
         print_progress = false;
         printer.join();
-        trial_conseqs.push_back(bestConsensusOf(bucket_conseqs)); // best_conseq_of_kmer (or an euqally good one) is found and saved
-        threads.clear();
-        done_trials++;
+		trial_conseqs.push_back(bestConsensusOf(bucket_conseqs)); // best_conseq_of_kmer (or an euqally good one) is found and saved
+		threads.clear();
+		done_trials++;
     }
     cout << endl;
     pair<DnaString, int> consensus_sequencs = bestConsensusOf(trial_conseqs); //consensus sequence of best bucket (smallest score(T))
@@ -810,33 +925,33 @@ DnaString runProjection(){
  * @return
  */
 
-DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length) { //added &
-    cout << "running _not_ projection..." << endl;
+DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length, StringSet<DnaString> sequences) { //added &
+	cout << "running _not_ projection..." << endl;
     DnaString genmap_consensus_sequence;
-    vector<pair<int, int>> candidate_starting_positions;
+    vector<pair<int,int>> candidate_starting_positions;
 
 
-    cout << "processing vector..." << endl;
+	cout << "processing vector..." << endl;
     candidate_starting_positions = processGenMapFrequencyVector(frequency_vector, no_of_sequences, sequence_length);
 
     cout << "filtering candidates..." << endl;
-    map<int, vector<pair<int, int>>> filtered_starting_positions = filterGenMapCandidates(motif_length, candidate_starting_positions);
+    map<int, vector<pair<int,int>>> filtered_starting_positions = filterGenMapCandidates(motif_length, candidate_starting_positions, sequences);
 
-    cout << "getting consensus sequence..." << endl;
-    genmap_consensus_sequence = getConsesusByGenMapFrequency(motif_length, filtered_starting_positions);
+	cout << "getting consensus sequence..." << endl;
+	genmap_consensus_sequence = getConsesusByGenMapFrequency(motif_length, filtered_starting_positions);
 
-    cout << "consensus sequence: " << genmap_consensus_sequence << endl;
+	cout << "consensus sequence: " << genmap_consensus_sequence << endl;
 
 
     vector<pair<DnaString, int>> bucket_conseqs;
-    for(pair<int, vector<pair<int, int>>> bucket : filtered_starting_positions){
-        vector<vector<float>> Wh;
-        vector<vector<float>> posM = vector<vector<float>>(length(sequences), (vector<float>(length(sequences[0]) - motif_length + 1, 0)));
-        initWh(motif_length, bucket, Wh); //initialize weight matrix Wh for prob of a base in the motif
-        for(int refine_iter = 0; refine_iter < 500; refine_iter++) //Refine weight matrix W and posM until convergence
-            refine(motif_length, Wh, posM);
-        getConsensusSeq(motif_length, d, posM, bucket_conseqs); //CONSENSUS SEQUENCE
-    }
+    for(pair<int, vector<pair<int,int>>> bucket : filtered_starting_positions){
+				vector<vector<float>> Wh;
+				vector<vector<float>> posM = vector<vector<float>>(length(sequences), (vector<float>(length(sequences[0]) - motif_length + 1, 0)));
+				initWh(motif_length, bucket, Wh); //initialize weight matrix Wh for prob of a base in the motif
+				for(int refine_iter = 0; refine_iter < 500; refine_iter++) //Refine weight matrix W and posM until convergence
+					refine(motif_length, Wh, posM);
+				getConsensusSeq(motif_length, d, posM, bucket_conseqs); //CONSENSUS SEQUENCE
+	}
     pair<DnaString, int> consensus_sequencs = bestConsensusOf(bucket_conseqs); //consensus sequence of best bucket (smallest score(T))
     cout << "searched consensus sequence: [" << consensus_sequencs.first << "] with a score of " << consensus_sequencs.second << endl;
     genmap_consensus_sequence = consensus_sequencs.first;
@@ -856,27 +971,27 @@ DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_
  * @param pattern
  */
 void printPositions(int num_of_seqs, DnaString pattern) {
-    auto delegate = [](auto & iter, DnaString const & needle, uint8_t errors) {
-        for (auto occ : getOccurrences(iter))
-            addToMap<pair<int, DnaString>>(foundMatches, seqidx, pair<int, DnaString>(occ, substr(sequences[seqidx], occ, l)));
-    };
+	auto delegate = [](auto & iter, DnaString const & needle, uint8_t errors) {
+		for (auto occ : getOccurrences(iter))
+			addToMap<pair<int, DnaString>>(foundMatches, seqidx, pair<int, DnaString>(occ, substr(sequences[seqidx], occ, l)));
+	};
 
-    for(seqidx = 0; seqidx < num_of_seqs; seqidx++) {
-        Index<DnaString, BidirectionalIndex<FMIndex<>>> index(sequences[seqidx]);
-        switch (d) {
-            case 1: find<0,1>(delegate, index, pattern, HammingDistance()); break;
-            case 2: find<0,2>(delegate, index, pattern, HammingDistance()); break;
-            case 3: find<0,3>(delegate, index, pattern, HammingDistance()); break;
-            case 4: find<0,4>(delegate, index, pattern, HammingDistance()); break;
-        }
-    }
+	for(seqidx = 0; seqidx < num_of_seqs; seqidx++) {
+		Index<DnaString, BidirectionalIndex<FMIndex<>>> index(sequences[seqidx]);
+		switch (d) {
+			case 1: find<0,1>(delegate, index, pattern, HammingDistance()); break;
+			case 2: find<0,2>(delegate, index, pattern, HammingDistance()); break;
+			case 3: find<0,3>(delegate, index, pattern, HammingDistance()); break;
+			case 4: find<0,4>(delegate, index, pattern, HammingDistance()); break;
+		}
+	}
 
-    for(auto p : foundMatches) { // print out the foundMatches
-        cout << p.first << ": { ";
-        for(pair<int, DnaString> pos : p.second)
-            cout << "[" << pos.first << " => " << pos.second << "] ";
-        cout << "}" << endl;
-    }
+	for(auto p : foundMatches) { // print out the foundMatches
+		cout << p.first << ": { ";
+		for(pair<int, DnaString> pos : p.second)
+			cout << "[" << pos.first << " => " << pos.second << "] ";
+		cout << "}" << endl;
+	}
 }
 
 
@@ -889,154 +1004,154 @@ void printPositions(int num_of_seqs, DnaString pattern) {
  * @param pattern
  */
 void printPerformanceCoefficient(DnaString pattern) {
-    int z = 0;
-    int n = 0;
+	int z = 0;
+	int n = 0;
 
-    if(DnaString(pm[0][2]) == pattern) {
-        z = 1; n = 1; exactMatches++;
-    } else {
+	if(DnaString(pm[0][2]) == pattern) {
+		z = 1; n = 1; exactMatches++;
+	} else {
 
-        for(int i = 0; i < length(sequences); i++) {
-            int planted_position = stoi(pm[i+1][1]);
-            if(foundMatches.count(i) > 0) {
-                int lowerBound = planted_position - (l - 1);
-                int upperBound = planted_position + (l - 1);
-                int u = l;
-                int current_fm;
-                for(pair<int, DnaString> foundMatch: foundMatches[i]) {
-                    current_fm = foundMatch.first;
-                    if(current_fm >= lowerBound && current_fm <= upperBound)
-                        break;
-                }
-                int tail = (current_fm >= lowerBound && current_fm <= upperBound) ? abs(planted_position - current_fm) : l;
-                u = min(u, tail);
-                z += (l - u);
-                n += (l + u);
-            } else {
-                n += l;
-            }
-        }
-    }
-    avrg_performance_coefficient += (double)z / (double)n;
-    cout << "The performance coefficient is " << roundWithPrecision((double)z / (double)n, 2) << "." << endl;
+		for(int i = 0; i < length(sequences); i++) {
+			int planted_position = stoi(pm[i+1][1]);
+			if(foundMatches.count(i) > 0) {
+				int lowerBound = planted_position - (l - 1);
+				int upperBound = planted_position + (l - 1);
+				int u = l;
+				int current_fm;
+				for(pair<int, DnaString> foundMatch: foundMatches[i]) {
+					current_fm = foundMatch.first;
+					if(current_fm >= lowerBound && current_fm <= upperBound)
+						break;
+				}
+				int tail = (current_fm >= lowerBound && current_fm <= upperBound) ? abs(planted_position - current_fm) : l;
+				u = min(u, tail);
+				z += (l - u);
+				n += (l + u);
+			} else {
+				n += l;
+			}
+		}
+	}
+	avrg_performance_coefficient += (double)z / (double)n;
+	cout << "The performance coefficient is " << roundWithPrecision((double)z / (double)n, 2) << "." << endl;
 }
 
 
 
 int main(int argc, char const ** argv) {
-    program_start = chrono::steady_clock::now();
-    noOfThreads = 12;// min(1,(int) thread::hardware_concurrency()-2);
+	program_start = chrono::steady_clock::now();
+	noOfThreads = 12;// min(1,(int) thread::hardware_concurrency()-2);
     if (argc < 3) {
         cerr << "Not enough arguments, expected are at least 2: genome-file (in fasta) and parameters file (in csv). "
-                "Optional parameters are: planted motiff file (in csv) and amount of datasets (integer).\n";
+        		"Optional parameters are: planted motiff file (in csv) and amount of datasets (integer).\n";
         return -1;
     }
-    string fastaFilename(argv[1]);
-    size_t lastSlash = fastaFilename.find_last_of("/");
-    string file_path = fastaFilename.substr(0, lastSlash);
-    string filenameOnly = fastaFilename.substr(lastSlash+1);
-    size_t ftpos0 = filenameOnly.find(".fasta");
-    string file_without_suffix = filenameOnly.substr(0, ftpos0);
-    size_t ftpos = fastaFilename.find(".fasta");
-    if(ftpos == -1) {cerr << "invalid fasta file. Filename has to end with .fasta"; return -1;}
-    string datasetName = fastaFilename.substr(0, ftpos);
-    string parametersFile(argv[2]), plantedMotifFilename, pmName;
-    if(argc > 3) {
-        plantedMotifFilename = string(argv[3]);
-        ftpos = plantedMotifFilename.find(".csv");
-        if(ftpos == -1) {cerr << "invalid planted motif file. Filename has to end with .csv"; return -1;}
-        pmName = plantedMotifFilename.substr(0, ftpos);
-    }
+	string fastaFilename(argv[1]);
+	size_t lastSlash = fastaFilename.find_last_of("/");
+	string file_path = fastaFilename.substr(0, lastSlash);
+	string filenameOnly = fastaFilename.substr(lastSlash+1);
+	size_t ftpos0 = filenameOnly.find(".fasta");
+	string file_without_suffix = filenameOnly.substr(0, ftpos0);
+	size_t ftpos = fastaFilename.find(".fasta");
+	if(ftpos == -1) {cerr << "invalid fasta file. Filename has to end with .fasta"; return -1;}
+	string datasetName = fastaFilename.substr(0, ftpos);
+	string parametersFile(argv[2]), plantedMotifFilename, pmName;
+	if(argc > 3) {
+		plantedMotifFilename = string(argv[3]);
+		ftpos = plantedMotifFilename.find(".csv");
+		if(ftpos == -1) {cerr << "invalid planted motif file. Filename has to end with .csv"; return -1;}
+		pmName = plantedMotifFilename.substr(0, ftpos);
+	}
 
-    ifstream file2(parametersFile);
-    if(file2.good()) parameters = csvParseIntoVector(file2, '\t', 1);
-    else { cerr << "Parameters file not found or not readable \n"; return -1; }
+	ifstream file2(parametersFile);
+	if(file2.good()) parameters = csvParseIntoVector(file2, '\t', 1);
+	else { cerr << "Parameters file not found or not readable \n"; return -1; }
 
-    cout << endl;
-    l = stoi(parameters[0][0]);
-    d = stoi(parameters[0][1]);/*allowed mutations*/
-    k = stoi(parameters[0][2]);/*the number of positions to be projected*/
-    s = stoi(parameters[0][3]);//choose a value for s (bucket threshold)
-    m = stoi(parameters[0][4]);//calculate the optimal number of trials m;
-    datasets = 1;
+	cout << endl;
+	l = stoi(parameters[0][0]);
+	d = stoi(parameters[0][1]);/*allowed mutations*/
+	k = stoi(parameters[0][2]);/*the number of positions to be projected*/
+	s = stoi(parameters[0][3]);//choose a value for s (bucket threshold)
+	m = stoi(parameters[0][4]);//calculate the optimal number of trials m;
+	datasets = 1;
 
-    if(argc == 5) datasets = stoi(argv[4]);
-    string no = "";
+	if(argc == 5) datasets = stoi(argv[4]);
+	string no = "";
 
-    datasets_start = chrono::steady_clock::now();
-    step = datasets_start;
+	datasets_start = chrono::steady_clock::now();
+	step = datasets_start;
     for(int i = 1; i <= datasets; i++) {
-        tmp_round = i;
-        chrono::steady_clock::time_point dataset_start = chrono::steady_clock::now();
-        if(argc == 5) no = "_" + to_string(i);
+    	tmp_round = i;
+		chrono::steady_clock::time_point dataset_start = chrono::steady_clock::now();
+    	if(argc == 5) no = "_" + to_string(i);
 
-        //use the fai file to get the content of the fasta file
-        FaiIndex faiIndex;
-        if (!build(faiIndex, (datasetName + no + ".fasta").c_str())) {
-            cerr << "ERROR: Could not build FAI index for file " << (datasetName + no + ".fasta").c_str() << "\n";
-            return -1;
-        }
+    	//use the fai file to get the content of the fasta file
+		FaiIndex faiIndex;
+		if (!build(faiIndex, (datasetName + no + ".fasta").c_str())) {
+			cerr << "ERROR: Could not build FAI index for file " << (datasetName + no + ".fasta").c_str() << "\n";
+			return -1;
+		}
 
-        if (!save(faiIndex, toCString((datasetName + no + ".fasta.fai").c_str()))) {
-            cerr << "ERROR: Could not write the index to file!\n";
-            return -1;
-        }
+		if (!save(faiIndex, toCString((datasetName + no + ".fasta.fai").c_str()))) {
+			cerr << "ERROR: Could not write the index to file!\n";
+			return -1;
+		}
 
-        cout << "Index file " << (datasetName + no + ".fasta.fai").c_str() << " was successfully created.\n";
+		cout << "Index file " << (datasetName + no + ".fasta.fai").c_str() << " was successfully created.\n";
 
-        if (!open(faiIndex, (datasetName + no + ".fasta").c_str()))
-            cout << "ERROR: Could not load FAI index " << (datasetName + no + ".fasta.fai").c_str() << "\n";
+		if (!open(faiIndex, (datasetName + no + ".fasta").c_str()))
+			cout << "ERROR: Could not load FAI index " << (datasetName + no + ".fasta.fai").c_str() << "\n";
 
-        if(argc > 3) {
-            ifstream file(pmName + no + ".csv");
-            if(file.good()) pm = csvParseIntoVector(file, '\t', 1);
-            else { cerr << "Planted motif file not found or not readable \n"; return -1; }
-        }
+		if(argc > 3) {
+			ifstream file(pmName + no + ".csv");
+			if(file.good()) pm = csvParseIntoVector(file, '\t', 1);
+			else { cerr << "Planted motif file not found or not readable \n"; return -1; }
+		}
         /*
          * Compute the mappbility/get genmap frequency vector
          */
-        vector<uint8_t> genmap_frequency_vector = getGenMapFrequencyVector(
-                datasetName + no,
-                file_without_suffix + no,
-                l,
-                d
-        );
+		vector<uint8_t> genmap_frequency_vector = getGenMapFrequencyVector(
+			datasetName + no,
+			file_without_suffix + no,
+			l,
+			d
+		);
 
-        unsigned num_of_seqs = numSeqs(faiIndex);
-        //cout << "Num of seqs: " << num_of_seqs << endl;
+		unsigned num_of_seqs = numSeqs(faiIndex);
+		//cout << "Num of seqs: " << num_of_seqs << endl;
         for(unsigned idx = 0; idx < num_of_seqs; idx++){
             DnaString seq_in_file;
             readSequence(seq_in_file, faiIndex, idx);
             appendValue(sequences, seq_in_file); //save each sequence in the stringSet sequences
         }
 
-        bool proj = false;
+		bool proj = false;
 
-        chrono::steady_clock::time_point start = chrono::steady_clock::now();
-        DnaString pattern = proj ? runProjection() : runGenMap(l, genmap_frequency_vector, length(sequences), length(sequences[0]));
-        if(length(pattern) == 0) return -4; // No sequences in any bucket
-        chrono::steady_clock::time_point end = chrono::steady_clock::now();
-        times.push_back(chrono::duration_cast<chrono::milliseconds>(end - start).count() / m);
+		chrono::steady_clock::time_point start = chrono::steady_clock::now();
+		DnaString pattern = proj ? runProjection() : runGenMap(l, genmap_frequency_vector, length(sequences), length(sequences[0]), sequences);
+		if(length(pattern) == 0) return -4; // No sequences in any bucket
+		chrono::steady_clock::time_point end = chrono::steady_clock::now();
+		times.push_back(chrono::duration_cast<chrono::milliseconds>(end - start).count() / m);
 
-        if(d < 5) printPositions(num_of_seqs, pattern);
-        if(argc > 3) printPerformanceCoefficient(pattern);
+		if(d < 5) printPositions(num_of_seqs, pattern);
+		if(argc > 3) printPerformanceCoefficient(pattern);
 
-        done_datasets++; // One dataset is processed
-        clear(sequences); foundMatches.clear();	seqidx = 0; // reset
-        chrono::steady_clock::time_point dataset_end = chrono::steady_clock::now();
-        cout << "Processing this dataset took " << chrono::duration_cast<chrono::milliseconds>(dataset_end - dataset_start).count() / 1000 << " seconds." << endl << endl;
+		done_datasets++; // One dataset is processed
+		clear(sequences); foundMatches.clear();	seqidx = 0; // reset
+		chrono::steady_clock::time_point dataset_end = chrono::steady_clock::now();
+		cout << "Processing this dataset took " << chrono::duration_cast<chrono::milliseconds>(dataset_end - dataset_start).count() / 1000 << " seconds." << endl << endl;
     }
 
 
-    double average_time;
-    for(double time : times) average_time += time;
-    average_time = average_time / length(times);
-    cout << "The average time for one trial was " << average_time / 1000 << " seconds." << endl;
+	double average_time;
+	for(double time : times) average_time += time;
+	average_time = average_time / length(times);
+	cout << "The average time for one trial was " << average_time / 1000 << " seconds." << endl;
 
-    cout << "For " << exactMatches << " out of " << datasets << " dataset(s) the correct planted motifs were found. The average performance coefficient is " << roundWithPrecision(avrg_performance_coefficient / (double) datasets, 2) << endl;
+	cout << "For " << exactMatches << " out of " << datasets << " dataset(s) the correct planted motifs were found. The average performance coefficient is " << roundWithPrecision(avrg_performance_coefficient / (double) datasets, 2) << endl;
 
-    chrono::steady_clock::time_point program_end = chrono::steady_clock::now();
-    vector<int> time_passed = secondsToHours(chrono::duration_cast<chrono::seconds>(program_end-program_start).count());
-    cout << "Execution of program finished after (hh:mm:ss) " << timeVectorToString(time_passed) << "." << endl;
+	chrono::steady_clock::time_point program_end = chrono::steady_clock::now();
+	vector<int> time_passed = secondsToHours(chrono::duration_cast<chrono::seconds>(program_end-program_start).count());
+	cout << "Execution of program finished after (hh:mm:ss) " << timeVectorToString(time_passed) << "." << endl;
     return 0; // execution successful
 }
