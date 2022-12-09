@@ -53,7 +53,7 @@ void load(vector<value_t> & vec, string path)
  * @return
  */
 vector<uint8_t> getGenMapFrequencyVector(string path_filename, string filename, int motif_length, int mismatches) {
-	mismatches = 3;
+	//mismatches = 3;
     vector<uint8_t> frequency_vector;
 	string output_folder_name = "_output_";
 	string genmap_command =
@@ -108,11 +108,11 @@ vector<int> removeDuplicates(vector<int> v) {
  * @param nthLargestNumber
  * @return
  */
-int findNthLargestNumber(vector<int>& v, int nthLargestNumber) {
+int findNthLargestNumber(vector<int>& v, int nth_largest_number) {
     // only two lines of code required.
     v = removeDuplicates(v);
     sort(v.begin(), v.end());
-    return v[v.size() - nthLargestNumber];
+    return v[v.size() - nth_largest_number];
 }
 
 
@@ -423,7 +423,7 @@ String<char> getRandomBitmap(int motif_length, int projection_length) {
  * @param projection_length
  * @param buckets
  */
-void randomProjections(int& motif_length, int& projection_length,map<int, vector<pair<int,int>>>& buckets) {
+void randomProjections(int& motif_length, int& projection_length, map<int, vector<pair<int,int>>>& buckets) {
     String<char> bitmap = getRandomBitmap(motif_length, projection_length);
     for (TStringSetIterator it = begin(sequences); it != end(sequences); ++it){
         Index<DnaString, IndexQGram<GenericShape> > index(*it); //use the bitmap on a generic shape
@@ -443,12 +443,7 @@ void randomProjections(int& motif_length, int& projection_length,map<int, vector
  *
  */
 
-void addBackgroundProbability(
-        float* background_probability_distribution,
-        vector<vector<float>>& Wh,
-        int& motif_length,
-        int number_of_sequences
-) {
+void addBackgroundProbability(float* background_probability_distribution, vector<vector<float>>& Wh, int& motif_length, int number_of_sequences) {
     for (int i = 0; i < 4; i++)
         for (int j = 0; j < motif_length; j++)
             Wh[i][j] = Wh[i][j] / number_of_sequences + background_probability_distribution[i]; //in percent + Laplace correction
@@ -1050,11 +1045,11 @@ double calculatePerformanceCoefficient(DnaString pattern, double lmer_performanc
     //cout << "The performance coefficient is " << roundWithPrecision((double)z / (double)n, 2) << "." << endl;
     return lmer_performance_coefficient;
 }
-DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length, StringSet<DnaString> sequences) { //added &
+DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length, StringSet<DnaString> sequences, int nth_largest) { //added &
     cout << "running genmap..." << endl;
 
     cout << "processing vector..." << endl;
-    int nth_largest = 8;
+    //nth_largest = 5;
     vector<pair<int,int>> genmap_lmers_starting_positions = processGenMapFrequencyVector(frequency_vector, no_of_sequences, sequence_length, nth_largest);
 
     cout << "size of genmap_lmers_starting_positions is " << genmap_lmers_starting_positions.size() << endl;
@@ -1201,7 +1196,7 @@ void printPerformanceCoefficient(DnaString pattern) {
 int main(int argc, char const ** argv) {
 	program_start = chrono::steady_clock::now();
 	noOfThreads = 12;// min(1,(int) thread::hardware_concurrency()-2);
-    if (argc < 3) {
+    /*if (argc < 3) {
         cerr << "Not enough arguments, expected are at least 2: genome-file (in fasta) and parameters file (in csv). "
         		"Optional parameters are: planted motiff file (in csv) and amount of datasets (integer).\n";
         return -1;
@@ -1221,6 +1216,30 @@ int main(int argc, char const ** argv) {
 		ftpos = plantedMotifFilename.find(".csv");
 		if(ftpos == -1) {cerr << "invalid planted motif file. Filename has to end with .csv"; return -1;}
 		pmName = plantedMotifFilename.substr(0, ftpos);
+	}*/
+
+    if (argc < 5) {
+        cerr << "Not enough arguments, expected are at least 4: algorithm (either genmap or projection), nth largest frequency (used in genmap), genome-file (in fasta) and parameters file (in csv). "
+        		"Optional parameters are: planted motiff file (in csv) and amount of datasets (integer).\n";
+        return -1;
+    }
+    string algorithm(argv[1]);
+    int nth_largest_frequency = stoi(argv[2]);
+	string fastaFilename(argv[3]);
+	size_t lastSlash = fastaFilename.find_last_of("/");
+	string file_path = fastaFilename.substr(0, lastSlash);
+	string filenameOnly = fastaFilename.substr(lastSlash+1);
+	size_t ftpos0 = filenameOnly.find(".fasta");
+	string file_without_suffix = filenameOnly.substr(0, ftpos0);
+	size_t ftpos = fastaFilename.find(".fasta");
+	if(ftpos == -1) {cerr << "invalid fasta file. Filename has to end with .fasta"; return -1;}
+	string datasetName = fastaFilename.substr(0, ftpos);
+	string parametersFile(argv[4]), plantedMotifFilename, pmName;
+	if(argc > 5) {
+		plantedMotifFilename = string(argv[5]);
+		ftpos = plantedMotifFilename.find(".csv");
+		if(ftpos == -1) {cerr << "invalid planted motif file. Filename has to end with .csv"; return -1;}
+		pmName = plantedMotifFilename.substr(0, ftpos);
 	}
 
 	ifstream file2(parametersFile);
@@ -1235,15 +1254,20 @@ int main(int argc, char const ** argv) {
 	m = stoi(parameters[0][4]);//calculate the optimal number of trials m;
 	datasets = 1;
 
-	if(argc == 5) datasets = stoi(argv[4]);
+	/*if(argc == 5) datasets = stoi(argv[4]);
+	string no = "";*/
+    if(argc == 7) datasets = stoi(argv[6]);
 	string no = "";
+
+
 
 	datasets_start = chrono::steady_clock::now();
 	step = datasets_start;
     for(int i = 1; i <= datasets; i++) {
     	tmp_round = i;
 		chrono::steady_clock::time_point dataset_start = chrono::steady_clock::now();
-    	if(argc == 5) no = "_" + to_string(i);
+    	//if(argc == 5) no = "_" + to_string(i);
+        if(argc == 7) no = "_" + to_string(i);
 
     	//use the fai file to get the content of the fasta file
 		FaiIndex faiIndex;
@@ -1262,20 +1286,20 @@ int main(int argc, char const ** argv) {
 		if (!open(faiIndex, (datasetName + no + ".fasta").c_str()))
 			cout << "ERROR: Could not load FAI index " << (datasetName + no + ".fasta.fai").c_str() << "\n";
 
-		if(argc > 3) {
+		/*if(argc > 3) {
 			ifstream file(pmName + no + ".csv");
 			if(file.good()) pm = csvParseIntoVector(file, '\t', 1);
 			else { cerr << "Planted motif file not found or not readable \n"; return -1; }
-		}
+		}*/
+        if(argc > 5) {
+            ifstream file(pmName + no + ".csv");
+            if(file.good()) pm = csvParseIntoVector(file, '\t', 1);
+            else { cerr << "Planted motif file not found or not readable \n"; return -1; }
+        }
         /*
          * Compute the mappbility/get genmap frequency vector
          */
-		vector<uint8_t> genmap_frequency_vector = getGenMapFrequencyVector(
-			datasetName + no,
-			file_without_suffix + no,
-			l,
-			d
-		);
+		vector<uint8_t> genmap_frequency_vector = getGenMapFrequencyVector(datasetName + no, file_without_suffix + no, l, d);
 
 		unsigned num_of_seqs = numSeqs(faiIndex);
 		//cout << "Num of seqs: " << num_of_seqs << endl;
@@ -1286,15 +1310,17 @@ int main(int argc, char const ** argv) {
         }
 
 		bool proj = false;
+        if (algorithm == "projection") proj = true;
 
-		chrono::steady_clock::time_point start = chrono::steady_clock::now();
-		DnaString pattern = proj ? runProjection() : runGenMap(l, genmap_frequency_vector, length(sequences), length(sequences[0]), sequences);
+            chrono::steady_clock::time_point start = chrono::steady_clock::now();
+		DnaString pattern = proj ? runProjection() : runGenMap(l, genmap_frequency_vector, length(sequences), length(sequences[0]), sequences, nth_largest_frequency);
 		if(length(pattern) == 0) return -4; // No sequences in any bucket
 		chrono::steady_clock::time_point end = chrono::steady_clock::now();
 		times.push_back(chrono::duration_cast<chrono::milliseconds>(end - start).count() / m);
 
 		if(d < 5) printPositions(num_of_seqs, pattern);
-		if(argc > 3) printPerformanceCoefficient(pattern);
+		//if(argc > 3) printPerformanceCoefficient(pattern);
+        if(argc > 5) printPerformanceCoefficient(pattern);
 
 		done_datasets++; // One dataset is processed
 		clear(sequences); foundMatches.clear();	seqidx = 0; // reset
