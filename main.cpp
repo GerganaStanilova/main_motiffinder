@@ -53,7 +53,7 @@ void load(vector<value_t> & vec, string path)
  * @return
  */
 vector<uint8_t> getGenMapFrequencyVector(string path_filename, string filename, int motif_length, int mismatches) {
-	//mismatches = 3;
+	//mismatches = 2;
     vector<uint8_t> frequency_vector;
 	string output_folder_name = "_output_";
 	string genmap_command =
@@ -109,7 +109,6 @@ vector<int> removeDuplicates(vector<int> v) {
  * @return
  */
 int findNthLargestNumber(vector<int>& v, int nth_largest_number) {
-    // only two lines of code required.
     v = removeDuplicates(v);
     sort(v.begin(), v.end());
     return v[v.size() - nth_largest_number];
@@ -584,174 +583,6 @@ void getConsensusSeq(int& motif_length, int& d, vector<vector<float>>& posM, vec
     mtx_bucket_conseqs.unlock();
 }
 
-
-
-vector<pair<int,int>> filterCandidates(StringSet<DnaString>& sequences, vector<pair<int,int>>& genmap_lmers, int& motif_length, int& greedy_error, int& candidate_size) {
-    vector<pair<int,int>> candidates;
-    bool not_enough_candidates;
-
-    int first_seq_end = 0;
-
-    // find where the first sequence from the genmap candidates ends
-    for(int first_s_i = 0; first_s_i < genmap_lmers.size(); first_s_i++) {
-        if(genmap_lmers.at(first_s_i).first == 0){
-            first_seq_end++;
-        }
-        else {
-            break;
-        }
-    }
-    vector<pair<int,int>>::const_iterator first1 = genmap_lmers.begin();
-    vector<pair<int,int>>::const_iterator last1 = genmap_lmers.begin() + first_seq_end;
-    vector<pair<int,int>>  first_lmers(first1, last1);
-
-    //find the last lmer of the last sequence
-    int last_sequence = genmap_lmers.at(genmap_lmers.size()-1).first;
-    int last_lmer = genmap_lmers.at(genmap_lmers.size()-1).second;
-
-    //for each lmer of the first sequence
-    for (int first_i = 0; first_i < first_lmers.size(); first_i++) {
-        cout << "first_i " << first_i << endl;
-
-        candidates.push_back(first_lmers.at(first_i)); //add the lmer as the first candidate
-
-        //helper variables to skip checked lmers
-        vector<int> added_is(length(sequences), 0);
-
-        //for each other sequence than the first
-        for(int seq_i = 1; seq_i < length(sequences); seq_i++){
-            cout << "seq_i " << seq_i << endl;
-            //separate the current sequence
-            int curr_seq_start = 0;
-            for(int s_i = 0; s_i < genmap_lmers.size(); s_i++) {
-                if(genmap_lmers.at(s_i).first < seq_i){
-                    curr_seq_start++;
-                }
-                else {
-                    break;
-                }
-            }
-            int curr_seq_end = curr_seq_start;
-            for(int s_i = curr_seq_start; s_i < genmap_lmers.size(); s_i++) {
-                if(genmap_lmers.at(s_i).first == seq_i){
-                    curr_seq_end++;
-                }
-                else {
-                    break;
-                }
-            }
-
-            vector<pair<int,int>>::const_iterator first_curr = genmap_lmers.begin() + curr_seq_start;
-            vector<pair<int,int>>::const_iterator last_curr = genmap_lmers.begin() + curr_seq_end;
-            vector<pair<int,int>>  curr_seq_lmers(first_curr, last_curr);
-
-            cout << "Current lmers "<< endl;
-            for (auto i: curr_seq_lmers) {
-                std::cout << i.second << ' ';
-            }
-            cout << endl;
-            int cand_size_before = (int) candidates.size();
-            cout << "added_is[" << seq_i << "] = " << added_is.at(seq_i) << endl;
-            int curr_seq_lmers_pos; //used to keep track of the last checked lmer
-            for(int curr_seq_i = 0 + added_is.at(seq_i); curr_seq_i < curr_seq_lmers.size(); curr_seq_i++) {
-                curr_seq_lmers_pos = curr_seq_i;
-                cout << "Current lmer position " << curr_seq_lmers.at(curr_seq_i).second << endl;
-                DnaString current_lmer = substr(sequences[curr_seq_lmers.at(curr_seq_i).first], curr_seq_lmers.at(curr_seq_i).second, motif_length);
-                DnaString current_candidate = substr(sequences[candidates.at(0).first], candidates.at(0).second, motif_length);
-                cout << "Current candidate - current lmer: " << current_candidate << " - " << current_lmer << endl;
-                cout << "Hamming dist(" << candidates.at(0).second << ", " << curr_seq_lmers.at(curr_seq_i).second << ") = " << hammingDist(current_candidate, current_lmer) << endl;
-
-                if(hammingDist(current_candidate, current_lmer) <= greedy_error) {
-                    if(candidates.size() == 1) {
-                        candidates.push_back(curr_seq_lmers.at(curr_seq_i));
-                        cout << "Candidates  "<< endl;
-                        for (auto i: candidates) {
-                            std::cout << i.second << ' ';
-                        }
-                        cout << endl;
-                        break;
-                    }
-                    else {
-                        cout << "--------s-------- "<< endl;
-                        cout << "Candidates" << endl;
-                        for (auto i: candidates) {
-                            std::cout << i.second << ' ';
-                        }
-                        cout << endl;
-
-                        bool internal_error = false;
-                        for(int internal_i = 1; internal_i < candidates.size(); internal_i++) {
-                            DnaString internal_candidate = substr(sequences[candidates.at(internal_i).first], candidates.at(internal_i).second, motif_length);
-                            cout << "Internal Hamming dist(" << curr_seq_lmers.at(curr_seq_i).second << ", " << candidates.at(internal_i).second << ") = " << hammingDist(internal_candidate, current_lmer) << endl;
-
-                            if(hammingDist(internal_candidate, current_lmer) > greedy_error) {
-                                internal_error = true;
-                                break;
-                            }
-                        }
-                        if(!internal_error) {
-                            candidates.push_back(curr_seq_lmers.at(curr_seq_i));
-                        }
-                        if(candidates.size() > cand_size_before) {
-                            cout << "break" << endl;
-                            break;
-                        }
-
-                        cout << "--------e-------- "<< endl;
-                    }
-
-                }
-
-
-            }
-
-            //if candidates is not full and we haven't reached the last lmer of the last sequence
-
-            if(candidates.size() > 2 && candidates.size() == cand_size_before && seq_i != last_sequence && curr_seq_lmers_pos != last_lmer) {
-
-                cout << "added_i before " << added_is.at(seq_i-1) << endl;
-                added_is.at(seq_i-1)++; //check the next element of the previous sequence
-                cout << "added_i after " << added_is.at(seq_i-1) << endl;
-                cout << "seq_i before " << seq_i << endl;
-
-                seq_i -= 2; //go to the sequence before (=-2 because the next iteration will add 1 to seq_i)
-                cout << "seq_i after " << seq_i << endl;
-
-                candidates.pop_back();
-            }
-
-
-        }
-        cout << "Candidates" << endl;
-        for (auto i: candidates) {
-            std::cout << i.second << ' ';
-        }
-        cout << endl;
-        //if(candidates.size() == length(sequences)) {
-        if(candidates.size() >= candidate_size) {
-            cout << "Candidates are full" << endl;
-            not_enough_candidates = false;
-            return candidates;
-            break;
-        }
-        else {
-            not_enough_candidates = true;
-        }
-        cout << endl;
-        candidates.clear();
-    }
-
-    if(not_enough_candidates) {
-        cout << "Not enough candidates" << endl;
-        //return candidates;
-        return genmap_lmers;
-    }
-    else {
-        return candidates;
-    }
-
-}
-
 map<int, vector<pair<int,int>>> convertToMap(vector<pair<int,int>>& vector_of_pairs) {
     map<int, vector<pair<int,int>>> vector_of_pairs_as_map;
     for(int i = 0; i < vector_of_pairs.size(); i++) {
@@ -778,50 +609,6 @@ vector<pair<int,int>> convertFromMap(map<int, vector<pair<int, DnaString>>>& vec
 
     return vector_of_pairs;
 }
-
-/**
- * GENMAP FUNCTION
- *
- *
- * @param motif_length
- * @param filtered_starting_positions
- * @return
- */
-
-DnaString getConsesusByGenMapFrequency(int& motif_length, map<int, vector<pair<int,int>>>& filtered_starting_positions) {
-    StringSet<DnaString> probable_motif_lmers;
-    DnaString genmap_consensus_sequence; //consensus sequence
-
-    for(pair<int, vector<pair<int,int>>> pos : filtered_starting_positions) {
-        DnaString current_lmer;
-        int seq_number = pos.first;
-        vector<pair<int,int>> candidate_positions = pos.second;
-        for(int i = 0; i < candidate_positions.size(); i++) {
-            //bool candidate_flag = candidate_positions.at(i).first;
-            int candidate_pos = candidate_positions.at(i).second;
-            current_lmer = substr(sequences[seq_number], candidate_pos, motif_length);
-            //cout << seq_number << " : " << current_lmer << endl;
-            appendValue(probable_motif_lmers, current_lmer);
-        }
-    }
-
-    for(int j = 0; j < motif_length; j++) {
-        int scores[4] = {0};
-        int max_score = 0;
-        char character;
-        for (int i = 0; i < length(probable_motif_lmers); i++) {
-            scores[ordValue(probable_motif_lmers[i][j])]++;
-            if (max_score < scores[ordValue(probable_motif_lmers[i][j])]) {
-                max_score = scores[ordValue(probable_motif_lmers[i][j])];
-                character = probable_motif_lmers[i][j];
-            }
-        }
-        genmap_consensus_sequence += character;
-    }
-
-    return genmap_consensus_sequence;
-}
-
 
 /**
  * HELPER FUNCTION
@@ -888,7 +675,7 @@ bool expectationMaximization(int motif_length, int threshold, int trial, int bst
 				vector<vector<float>> Wh;
 				vector<vector<float>> posM = vector<vector<float>>(length(sequences), (vector<float>(length(sequences[0]) - motif_length + 1, 0)));
 				initWh(motif_length, bucket, Wh); //initialize weight matrix Wh for probability of a base in the motif
-				for(int refine_iter = 0; refine_iter < 5; refine_iter++) //Refine weight matrix W and posM until convergence
+				for(int refine_iter = 0; refine_iter < 2; refine_iter++) //Refine weight matrix W and posM until convergence
 					refine(motif_length, Wh, posM);
 				getConsensusSeq(motif_length, d, posM, bucket_conseqs); //CONSENSUS SEQUENCE
 			}
@@ -1058,14 +845,31 @@ DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_
     //for loop that iterates through genmap_lmers_starting_positions
     // for each pair in the vector of pairs genmap_lmers_starting_positions, put the pair in the function convertPairToMap and call for (bucket : pair_as_map)
 
-    map<int, vector<pair<int,int>>> starting_positions_as_map = convertToMap(genmap_lmers_starting_positions);
+    //map<int, vector<pair<int,int>>> starting_positions_as_map = convertToMap(genmap_lmers_starting_positions);
     //outputMap(starting_positions_as_map);
-    DnaString genmap_consensus_sequence_pair;
-    int highest_performance_coefficient = 0;
+    //DnaString genmap_consensus_sequence_pair;
+    //int highest_performance_coefficient = 0;
+    
+    
+    pair<DnaString, int> best_genmap_conseq;
+    int best_genmap_score = 0;
+
     for(int i = 0; i < genmap_lmers_starting_positions.size(); i++) {
         map<int, vector<pair<int,int>>> pair_as_map = convertPairToMap(genmap_lmers_starting_positions.at(i));
 
         vector<pair<DnaString, int>> bucket_conseqs;
+        //int cur_min_score = -1;
+        /*
+        if(conseq.second == 0) // lowest possible score, return right away
+               return conseq;
+           if(cur_min_score == -1 || conseq.second < cur_min_score) { 	// for the first run, set cur_min_score to first conseq score
+               cur_min_score = conseq.second; // from the first run take the smallest
+               best_conseq = conseq;
+           }
+        */
+        //return best_conseq;
+
+        //(conseq_of_t, score_of_T)
 
         for(pair<int, vector<pair<int,int>>> bucket : pair_as_map){
             vector<vector<float>> Wh;
@@ -1074,8 +878,15 @@ DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_
             for(int refine_iter = 0; refine_iter < 10; refine_iter++) //Refine weight matrix W and posM until convergence
                 refine(motif_length, Wh, posM);
             getConsensusSeq(motif_length, d, posM, bucket_conseqs); //CONSENSUS SEQUENCE
+            pair<DnaString, int> curr_genmap_conseq = bucket_conseqs.at(i);
+            int curr_genmap_score = curr_genmap_conseq.second;
+            if(curr_genmap_score >= best_genmap_score) {
+                best_genmap_conseq.first = curr_genmap_conseq.first;
+                best_genmap_conseq.second = curr_genmap_conseq.second;
+            }
         }
-        pair<DnaString, int> consensus_sequencs = bestConsensusOf(bucket_conseqs); //consensus sequence of best bucket (smallest score(T))
+
+        /*pair<DnaString, int> consensus_sequencs = bestConsensusOf(bucket_conseqs); //consensus sequence of best bucket (smallest score(T))
         genmap_consensus_sequence_pair = consensus_sequencs.first;
 
         double lmer_performance_coefficient = 0;
@@ -1090,9 +901,14 @@ DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_
             cout << "searched consensus sequence: [" << consensus_sequencs.first << "] with a score of " << consensus_sequencs.second << endl;
             cout << "The performance coefficient is " << roundWithPrecision(genmap_lmer_performance_coefficient, 2) << "." << endl;
             break;
-        }
-    }
-    return genmap_consensus_sequence_pair;
+        }*/
+
+    double lmer_performance_coefficient = 0;
+    int exact_matches = 0;
+    double genmap_lmer_performance_coefficient = calculatePerformanceCoefficient(best_genmap_conseq, lmer_performance_coefficient, exact_matches);
+    cout << "searched consensus sequence: [" << best_genmap_conseq.first << "] with a score of " << best_genmap_conseq.second << endl;
+    cout << "The performance coefficient is " << roundWithPrecision(genmap_lmer_performance_coefficient, 2) << "." << endl;
+    return best_genmap_conseq.first;
 
 };
 
