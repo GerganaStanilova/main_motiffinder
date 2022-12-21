@@ -7,6 +7,9 @@
 #include <iterator>
 #include <map>
 #include <math.h>
+#include <cstdlib>
+
+
 #include <typeinfo>
 //#include "omp.h"
 
@@ -736,67 +739,7 @@ DnaString runProjection(){
     return consensus_sequencs.first;
 }
 
-/**
- * GENMAP FUNCTION
- *
- * @param motif_length
- * @param frequency_vector
- * @param no_of_sequences
- * @param sequence_length
- * @return
- */
-/*
-DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length, StringSet<DnaString> sequences) { //added &
-	cout << "running genmap..." << endl;
 
-	cout << "processing vector..." << endl;
-    int nth_largest = 1;
-    vector<pair<int,int>> genmap_lmers_starting_positions = processGenMapFrequencyVector(frequency_vector, no_of_sequences, sequence_length, nth_largest);
-
-    map<int, vector<pair<int,int>>> starting_positions_as_map;
-    bool filter = false;
-    if(filter) {
-        cout << "filtering candidates..." << endl;
-        int greedy_error = 2;
-        int candidate_size = 5;
-        vector<pair<int,int>> filtered_starting_positions = filterCandidates(sequences, genmap_lmers_starting_positions, motif_length, greedy_error, candidate_size);
-        starting_positions_as_map = convertToMap(filtered_starting_positions);
-    }
-    else {
-        starting_positions_as_map = convertToMap(genmap_lmers_starting_positions);
-    }
-
-    cout << "starting positions as map: " << endl;
-    outputMap(starting_positions_as_map);
-
-    //each starting position should be in a bucket
-
-	cout << "getting consensus sequence..." << endl;
-    DnaString genmap_consensus_sequence = getConsesusByGenMapFrequency(motif_length, starting_positions_as_map);
-
-	cout << "consensus sequence: " << genmap_consensus_sequence << endl;
-
-    vector<pair<DnaString, int>> bucket_conseqs;
-    //convert every starting position into a bucket so this bucket can be used to create the initial weight matrix initWh
-    //for loop that iterates through genmap_lmers_starting_positions
-    // for each pair in the vector of pairs genmap_lmers_starting_positions, put the pair in the function convertPairToMap and call for (bucket : pair_as_map)
-
-
-
-    for(pair<int, vector<pair<int,int>>> bucket : starting_positions_as_map){
-				vector<vector<float>> Wh;
-				vector<vector<float>> posM = vector<vector<float>>(length(sequences), (vector<float>(length(sequences[0]) - motif_length + 1, 0)));
-				initWh(motif_length, bucket, Wh); //initialize weight matrix Wh for prob of a base in the motif
-				for(int refine_iter = 0; refine_iter < 500; refine_iter++) //Refine weight matrix W and posM until convergence
-					refine(motif_length, Wh, posM);
-				getConsensusSeq(motif_length, d, posM, bucket_conseqs); //CONSENSUS SEQUENCE
-	}
-    pair<DnaString, int> consensus_sequencs = bestConsensusOf(bucket_conseqs); //consensus sequence of best bucket (smallest score(T))
-    cout << "searched consensus sequence: [" << consensus_sequencs.first << "] with a score of " << consensus_sequencs.second << endl;
-    genmap_consensus_sequence = consensus_sequencs.first;
-
-    return genmap_consensus_sequence;
-};*/
 
 double calculatePerformanceCoefficient(DnaString pattern, double lmer_performance_coefficient, int exact_matches) {
     int z = 0;
@@ -832,6 +775,7 @@ double calculatePerformanceCoefficient(DnaString pattern, double lmer_performanc
     //cout << "The performance coefficient is " << roundWithPrecision((double)z / (double)n, 2) << "." << endl;
     return lmer_performance_coefficient;
 }
+
 DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_of_sequences, int sequence_length, StringSet<DnaString> sequences, int nth_largest) { //added &
     cout << "running genmap..." << endl;
 
@@ -845,42 +789,30 @@ DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_
     //for loop that iterates through genmap_lmers_starting_positions
     // for each pair in the vector of pairs genmap_lmers_starting_positions, put the pair in the function convertPairToMap and call for (bucket : pair_as_map)
 
-    //map<int, vector<pair<int,int>>> starting_positions_as_map = convertToMap(genmap_lmers_starting_positions);
-    //outputMap(starting_positions_as_map);
-    //DnaString genmap_consensus_sequence_pair;
-    //int highest_performance_coefficient = 0;
-    
-    
     pair<DnaString, int> best_genmap_conseq;
-    int best_genmap_score = 0;
+    int best_genmap_score = -1;
 
     for(int i = 0; i < genmap_lmers_starting_positions.size(); i++) {
-        map<int, vector<pair<int,int>>> pair_as_map = convertPairToMap(genmap_lmers_starting_positions.at(i));
 
-        vector<pair<DnaString, int>> bucket_conseqs;
-        //int cur_min_score = -1;
-        /*
-        if(conseq.second == 0) // lowest possible score, return right away
-               return conseq;
-           if(cur_min_score == -1 || conseq.second < cur_min_score) { 	// for the first run, set cur_min_score to first conseq score
-               cur_min_score = conseq.second; // from the first run take the smallest
-               best_conseq = conseq;
-           }
-        */
-        //return best_conseq;
+        map<int, vector<pair<int, int>>> pair_as_map = convertPairToMap(genmap_lmers_starting_positions.at(i));
 
-        //(conseq_of_t, score_of_T)
 
-        for(pair<int, vector<pair<int,int>>> bucket : pair_as_map){
+        vector<pair<DnaString, int>> genmap_bucket_conseqs;
+
+        for (pair<int, vector<pair<int, int>>> bucket: pair_as_map) {
             vector<vector<float>> Wh;
             vector<vector<float>> posM = vector<vector<float>>(length(sequences), (vector<float>(length(sequences[0]) - motif_length + 1, 0)));
             initWh(motif_length, bucket, Wh); //initialize weight matrix Wh for prob of a base in the motif
-            for(int refine_iter = 0; refine_iter < 10; refine_iter++) //Refine weight matrix W and posM until convergence
+            for (int refine_iter = 0; refine_iter < 10; refine_iter++) //Refine weight matrix W and posM until convergence
                 refine(motif_length, Wh, posM);
-            getConsensusSeq(motif_length, d, posM, bucket_conseqs); //CONSENSUS SEQUENCE
-            pair<DnaString, int> curr_genmap_conseq = bucket_conseqs.at(i);
+            getConsensusSeq(motif_length, d, posM, genmap_bucket_conseqs); //CONSENSUS SEQUENCE
+            //cout << "getting here" << endl;
+            pair<DnaString, int> curr_genmap_conseq = genmap_bucket_conseqs.at(0);
             int curr_genmap_score = curr_genmap_conseq.second;
-            if(curr_genmap_score >= best_genmap_score) {
+
+            if (best_genmap_score == -1 || curr_genmap_score <= best_genmap_score) {
+
+                best_genmap_score = curr_genmap_score;
                 best_genmap_conseq.first = curr_genmap_conseq.first;
                 best_genmap_conseq.second = curr_genmap_conseq.second;
             }
@@ -902,10 +834,10 @@ DnaString runGenMap(int motif_length, vector<uint8_t>& frequency_vector, int no_
             cout << "The performance coefficient is " << roundWithPrecision(genmap_lmer_performance_coefficient, 2) << "." << endl;
             break;
         }*/
-
+    }
     double lmer_performance_coefficient = 0;
     int exact_matches = 0;
-    double genmap_lmer_performance_coefficient = calculatePerformanceCoefficient(best_genmap_conseq, lmer_performance_coefficient, exact_matches);
+    double genmap_lmer_performance_coefficient = calculatePerformanceCoefficient(best_genmap_conseq.first, lmer_performance_coefficient, exact_matches);
     cout << "searched consensus sequence: [" << best_genmap_conseq.first << "] with a score of " << best_genmap_conseq.second << endl;
     cout << "The performance coefficient is " << roundWithPrecision(genmap_lmer_performance_coefficient, 2) << "." << endl;
     return best_genmap_conseq.first;
@@ -1040,7 +972,9 @@ int main(int argc, char const ** argv) {
         return -1;
     }
     string algorithm(argv[1]);
+
     int nth_largest_frequency = stoi(argv[2]);
+
 	string fastaFilename(argv[3]);
 	size_t lastSlash = fastaFilename.find_last_of("/");
 	string file_path = fastaFilename.substr(0, lastSlash);
@@ -1050,6 +984,9 @@ int main(int argc, char const ** argv) {
 	size_t ftpos = fastaFilename.find(".fasta");
 	if(ftpos == -1) {cerr << "invalid fasta file. Filename has to end with .fasta"; return -1;}
 	string datasetName = fastaFilename.substr(0, ftpos);
+
+
+
 	string parametersFile(argv[4]), plantedMotifFilename, pmName;
 	if(argc > 5) {
 		plantedMotifFilename = string(argv[5]);
@@ -1112,6 +1049,12 @@ int main(int argc, char const ** argv) {
             if(file.good()) pm = csvParseIntoVector(file, '\t', 1);
             else { cerr << "Planted motif file not found or not readable \n"; return -1; }
         }
+
+
+
+
+
+
         /*
          * Compute the mappbility/get genmap frequency vector
          */
@@ -1119,17 +1062,52 @@ int main(int argc, char const ** argv) {
 
 		unsigned num_of_seqs = numSeqs(faiIndex);
 		//cout << "Num of seqs: " << num_of_seqs << endl;
+
         for(unsigned idx = 0; idx < num_of_seqs; idx++){
             DnaString seq_in_file;
             readSequence(seq_in_file, faiIndex, idx);
             appendValue(sequences, seq_in_file); //save each sequence in the stringSet sequences
+            //for genmap create a fasta-file for every sequence in the dataset
+            if (algorithm == "genmap") {
+
+                string mkdirr = "mkdir -p ./genmap_fasta_files/" + file_without_suffix + no;
+                const int dir_error = system(mkdirr.c_str());
+                if (-1 == dir_error)
+                {
+                    printf("Error creating subdirectory!n");
+                    exit(1);
+                }
+                string fasta_file_line_name = "./genmap_fasta_files/" + file_without_suffix + no + "/" + file_without_suffix + no + "_" + to_string(idx+1) + ".fasta";
+                cout << fasta_file_line_name << endl;
+                ofstream file(fasta_file_line_name);
+                file << ">seq0" << "\n" << seq_in_file;
+
+            }
+
         }
+
+        /*for (TStringSetIterator it = begin(sequences); it != end(sequences); ++it) {
+            ofstream MyFile("filename.txt");
+        }*/
+
+        if (algorithm == "genmap") {
+
+            vector<vector<uint8_t>> vector_of_genmap_frequency_vectors;
+            for(unsigned idx = 0; idx < num_of_seqs; idx++) {
+                //vector<uint8_t> getGenMapFrequencyVector(string path_filename, string filename, int motif_length, int mismatches)
+                //vector<uint8_t> genmap_frequency_vector_line = getGenMapFrequencyVector(datasetName + no, file_without_suffix + no + "_" + to_string(idx+1), l, d);
+            }
+        }
+
+
 
 		bool proj = false;
         if (algorithm == "projection") proj = true;
 
             chrono::steady_clock::time_point start = chrono::steady_clock::now();
-		DnaString pattern = proj ? runProjection() : runGenMap(l, genmap_frequency_vector, length(sequences), length(sequences[0]), sequences, nth_largest_frequency);
+
+
+        DnaString pattern = proj ? runProjection() : runGenMap(l, genmap_frequency_vector, length(sequences), length(sequences[0]), sequences, nth_largest_frequency);
 		if(length(pattern) == 0) return -4; // No sequences in any bucket
 		chrono::steady_clock::time_point end = chrono::steady_clock::now();
 		times.push_back(chrono::duration_cast<chrono::milliseconds>(end - start).count() / m);
