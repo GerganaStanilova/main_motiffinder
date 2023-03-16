@@ -116,8 +116,8 @@ vector<uint8_t> getGenMapFrequencyVectorOPS(string path_to_directory, string fil
     //experimental::filesystem::remove_all("./_output_/");
     //experimental::filesystem::remove_all("./_indeces_/");
 
-    //cout << "length of 1. fv: " << length(frequency_vector) << endl;
-    //cout << "./_output_/" << filename << ".freq8" << endl;
+    cout << "length of 1. fv: " << length(frequency_vector) << endl;
+    cout << "./_output_/" << filename << ".freq8" << endl;
     system("rm -rf ./_output_");
     system("rm -rf ./_indeces_");
 
@@ -741,7 +741,7 @@ bool expectationMaximization(int motif_length, int threshold, int trial, int bst
 				vector<vector<float>> Wh;
 				vector<vector<float>> posM = vector<vector<float>>(length(sequences), (vector<float>(length(sequences[0]) - motif_length + 1, 0)));
 				initWh(motif_length, bucket, Wh); //initialize weight matrix Wh for probability of a base in the motif
-				for(int refine_iter = 0; refine_iter < 2; refine_iter++) //Refine weight matrix W and posM until convergence
+				for(int refine_iter = 0; refine_iter < 10; refine_iter++) //Refine weight matrix W and posM until convergence
 					refine(motif_length, Wh, posM);
 				getConsensusSeq(motif_length, d, posM, bucket_conseqs); //CONSENSUS SEQUENCE
 			}
@@ -798,7 +798,7 @@ DnaString runProjection(){
     }
     cout << endl;
     pair<DnaString, int> consensus_sequencs = bestConsensusOf(trial_conseqs); //consensus sequence of best bucket (smallest score(T))
-    cout << "searched consensus sequence: [" << consensus_sequencs.first << "] with a score of " << consensus_sequencs.second << endl;
+    cout << "searched consensus sequence: [" << consensus_sequencs.first << "] with a score off " << consensus_sequencs.second << endl;
     return consensus_sequencs.first;
 }
 
@@ -934,7 +934,7 @@ DnaString runGenMap2(int motif_length, vector<pair<int,int>> genmap_lmers_starti
             vector<vector<float>> Wh;
             vector<vector<float>> posM = vector<vector<float>>(length(sequences), (vector<float>(length(sequences[0]) - motif_length + 1, 0)));
             initWh(motif_length, bucket, Wh); //initialize weight matrix Wh for prob of a base in the motif
-            for (int refine_iter = 0; refine_iter < 50; refine_iter++) //Refine weight matrix W and posM until convergence
+            for (int refine_iter = 0; refine_iter < 10; refine_iter++) //Refine weight matrix W and posM until convergence
                 refine(motif_length, Wh, posM);
             getConsensusSeq(motif_length, d, posM, genmap_bucket_conseqs); //CONSENSUS SEQUENCE
             //cout << "getting here" << endl;
@@ -948,12 +948,16 @@ DnaString runGenMap2(int motif_length, vector<pair<int,int>> genmap_lmers_starti
                 best_genmap_conseq.second = curr_genmap_conseq.second;
             }
         }
+        //cout << "getting there" << endl;
     }
+
+
     double lmer_performance_coefficient = 0;
     int exact_matches = 0;
-    double genmap_lmer_performance_coefficient = calculatePerformanceCoefficient(best_genmap_conseq.first, lmer_performance_coefficient, exact_matches);
+    //double genmap_lmer_performance_coefficient = calculatePerformanceCoefficient(best_genmap_conseq.first, lmer_performance_coefficient, exact_matches);
+    cout << "getting here too" << endl;
     cout << "searched consensus sequence: [" << best_genmap_conseq.first << "] with a score of " << best_genmap_conseq.second << endl;
-    cout << "The performance coefficient is " << roundWithPrecision(genmap_lmer_performance_coefficient, 2) << "." << endl;
+    //cout << "The performance coefficient is " << roundWithPrecision(genmap_lmer_performance_coefficient, 2) << "." << endl;
     return best_genmap_conseq.first;
 
 };
@@ -1191,7 +1195,7 @@ int main(int argc, char const ** argv) {
                     exit(1);
                 }
                 string fasta_file_line_name = "./genmap_fasta_files/genmap_" + file_without_suffix + no + "/" + file_without_suffix + no + "_" + to_string(idx+1) + ".fasta";
-                //cout << fasta_file_line_name << endl;
+                cout << fasta_file_line_name << endl;
                 ofstream file(fasta_file_line_name);
                 file << ">seq0" << "\n" << seq_in_file;
 
@@ -1203,14 +1207,16 @@ int main(int argc, char const ** argv) {
 
         string folder_with_fasta_file_lines = "./genmap_fasta_files/genmap_" + file_without_suffix + no;
 
+        cout << "file_without_suffix is " << file_without_suffix << endl;
+
         vector<pair<int,int>> lmers_contained_in_many_files;
 
-        int min_no_of_files = 14;
+        int min_no_of_files = num_of_seqs*0.5;
         if (algorithm == "genmap"){
             for(unsigned idx = 0; idx < num_of_seqs; idx++){
-                string folder_with_fasta_file_lines_filename = "genmap_syn_synthetic_data_10_2" + no + "_" + to_string(idx+1);
+                string folder_with_fasta_file_lines_filename = "genmap_" + file_without_suffix + no + "_" + to_string(idx+1);
                 vector<uint8_t> frequency_vector_freq8 = getGenMapFrequencyVectorOPS(folder_with_fasta_file_lines, folder_with_fasta_file_lines_filename, l, d);
-                //vector<int> frequency_vector_int = covertFreqVecToIntVec(frequency_vector_freq8);
+                vector<int> frequency_vector_int = covertFreqVecToIntVec(frequency_vector_freq8);
 
                 //saveLmerIfInMinNoOfFiles(frequency_vector_freq8, lmers_contained_in_many_files, idx, min_no_of_files);
                 for (int j = 0; j < length(frequency_vector_freq8); j++) {
